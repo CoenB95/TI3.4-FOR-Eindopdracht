@@ -9,10 +9,12 @@ main(List<String> arguments) {
 void testCase1_1() {
   print("\nTesting Contains 'ab', deterministic");
 
+  var ndfa = FiniteAutomaton();
   var q0 = FiniteAutomatonState('q0');
   var q1 = FiniteAutomatonState('q1');
   var q2 = FiniteAutomatonState('q2', endState: true);
 
+  ndfa.addStartState(q0);
   q0.addTransition('a', q1);
   q0.addTransition('b', q0);
   q1.addTransition('a', q1);
@@ -20,16 +22,18 @@ void testCase1_1() {
   q2.addTransition('a', q2);
   q2.addTransition('b', q2);
 
-  testContainsAB(q0);
+  testContainsAB(ndfa);
 }
 
 void testCase1_2() {
   print("\nTesting Contains 'ab', non-deterministic");
 
+  var ndfa = FiniteAutomaton();
   var q0 = FiniteAutomatonState('q0');
   var q1 = FiniteAutomatonState('q1');
   var q2 = FiniteAutomatonState('q2', endState: true);
 
+  ndfa.addStartState(q0);
   q0.addTransition('a', q0);
   q0.addTransition('b', q0);
   q0.addTransition('a', q1);
@@ -37,13 +41,16 @@ void testCase1_2() {
   q2.addTransition('a', q2);
   q2.addTransition('b', q2);
 
-  testContainsAB(q0);
+  testContainsAB(ndfa);
 }
 
-void testContainsAB(FiniteAutomatonState ndfa) {
-  print('Transactions:\n -${ndfa.listTransactions([]).join('\n -')}');
+void testContainsAB(FiniteAutomaton ndfa) {
+  print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
 
   print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
+
+  print('Finite automaton graph:');
+  print(ndfa.toGraph());
 
   assert (!ndfa.hasMatch('a'));
   assert (!ndfa.hasMatch('b'));
