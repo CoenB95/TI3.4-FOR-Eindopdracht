@@ -51,7 +51,7 @@ class FiniteAutomaton implements FormalLanguage {
     buffer.writeln('NOTHING [label="", shape=none]');
     states.toSet().forEach((s) {
       buffer.write('${s.name} [label="${s.name}", shape=ellipse');
-      if (_startStates.contains(s)) buffer.write(', peripheries=2');
+      if (s.endState) buffer.write(', peripheries=2');
       buffer.writeln(']');
     });
     buffer.writeln();

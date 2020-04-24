@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:TI3/formal_language.dart';
 
 main(List<String> arguments) {
@@ -44,13 +46,21 @@ void testCase1_2() {
   testContainsAB(ndfa);
 }
 
-void testContainsAB(FiniteAutomaton ndfa) {
+int graphCount = 0;
+void testContainsAB(FiniteAutomaton ndfa) async {
+  graphCount++;
+
   print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
 
   print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
 
   print('Finite automaton graph:');
-  print(ndfa.toGraph());
+  String graph = ndfa.toGraph();
+  String graphName = 'out/graph-${graphCount}';
+  File graphTempFile = File('${graphName}.gv');
+  await graphTempFile.writeAsString(graph);
+  await Process.run('dot', ['-Tpng', '-o${graphName}.png', '${graphName}.gv']);
+  print("Exported as ${graphName}.png");
 
   assert (!ndfa.hasMatch('a'));
   assert (!ndfa.hasMatch('b'));
