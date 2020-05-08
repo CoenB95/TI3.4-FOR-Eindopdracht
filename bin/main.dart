@@ -1,3 +1,4 @@
+import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/formal_language.dart';
 
 main(List<String> arguments) {
