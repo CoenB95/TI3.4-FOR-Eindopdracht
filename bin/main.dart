@@ -7,6 +7,7 @@ main(List<String> arguments) {
   print('Hello world!');
   testCase1_1();
   testCase1_2();
+  testCase1_3();
 }
 
 void testCase1_1() {
@@ -21,6 +22,14 @@ void testCase1_2() {
   var ndfa = LessonTestSets.testset2();
   testContainsAB(ndfa,
       expectDeterministic: false);
+}
+
+void testCase1_3() {
+  print("\nTesting Contains 'ab', regular expression generation");
+  var reg = LessonTestSets.testset3();
+  print('Language (max: 4):');
+  var lang = reg.generate(4);
+  print(lang);
 }
 
 int graphCount = 0;

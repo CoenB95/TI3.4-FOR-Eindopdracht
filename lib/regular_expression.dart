@@ -96,7 +96,7 @@ class RegularExpression {
         left == null ? emptyLanguage : left.generate(maxCharCount - 1);
         languageResult.addAll(languageLeft);
         for (int i = 1; i < maxCharCount; i++) {
-          HashSet<String> languageTemp = Set.from(languageResult);
+          HashSet<String> languageTemp = HashSet.from(languageResult);
           for (String s1 in languageLeft) {
             for (String s2 in languageTemp) {
               languageResult.add(s1 + s2);

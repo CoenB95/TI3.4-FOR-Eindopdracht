@@ -1,4 +1,5 @@
 import 'package:TI3/finite_automaton.dart';
+import 'package:TI3/regular_expression.dart';
 
 class LessonTestSets {
   //DFA: contains 'ab'
@@ -35,5 +36,12 @@ class LessonTestSets {
     q2.addTransition(q2, 'b');
 
     return ndfa;
+  }
+
+  static RegularExpression testset3() {
+    return RegularExpression('a').star().or(RegularExpression('b').star()).dot(
+      RegularExpression('a').dot(RegularExpression('b')).plus()).dot(
+      RegularExpression('a').star().or(RegularExpression('b').star())
+    );
   }
 }
