@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:TI3/finite_automaton.dart';
-import 'package:TI3/formal_language.dart';
+import 'package:TI3/testcases.dart';
 
 main(List<String> arguments) {
   print('Hello world!');
@@ -9,49 +11,34 @@ main(List<String> arguments) {
 
 void testCase1_1() {
   print("\nTesting Contains 'ab', deterministic");
-
-  var ndfa = FiniteAutomaton();
-  var q0 = FiniteAutomatonState('q0');
-  var q1 = FiniteAutomatonState('q1');
-  var q2 = FiniteAutomatonState('q2', endState: true);
-
-  ndfa.addStartState(q0);
-  q0.addTransition('a', q1);
-  q0.addTransition('b', q0);
-  q1.addTransition('a', q1);
-  q1.addTransition('b', q2);
-  q2.addTransition('a', q2);
-  q2.addTransition('b', q2);
-
-  testContainsAB(ndfa);
+  var ndfa = LessonTestSets.testset1();
+  testContainsAB(ndfa,
+      expectDeterministic: true);
 }
 
 void testCase1_2() {
   print("\nTesting Contains 'ab', non-deterministic");
-
-  var ndfa = FiniteAutomaton();
-  var q0 = FiniteAutomatonState('q0');
-  var q1 = FiniteAutomatonState('q1');
-  var q2 = FiniteAutomatonState('q2', endState: true);
-
-  ndfa.addStartState(q0);
-  q0.addTransition('a', q0);
-  q0.addTransition('b', q0);
-  q0.addTransition('a', q1);
-  q1.addTransition('b', q2);
-  q2.addTransition('a', q2);
-  q2.addTransition('b', q2);
-
-  testContainsAB(ndfa);
+  var ndfa = LessonTestSets.testset2();
+  testContainsAB(ndfa,
+      expectDeterministic: false);
 }
 
-void testContainsAB(FiniteAutomaton ndfa) {
+int graphCount = 0;
+void testContainsAB(NonDeterministicFiniteAutomaton ndfa, {bool expectDeterministic}) async {
+  graphCount++;
+
   print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
 
   print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
+  if (expectDeterministic != null) assert (ndfa.isDeterministic() == expectDeterministic);
 
   print('Finite automaton graph:');
-  print(ndfa.toGraph());
+  String graph = ndfa.toGraph();
+  String graphName = 'out/graph-${graphCount}';
+  File graphTempFile = File('${graphName}.gv');
+  await graphTempFile.writeAsString(graph);
+  await Process.run('dot', ['-Tpng', '-o${graphName}.png', '${graphName}.gv']);
+  print("Exported as ${graphName}.png");
 
   assert (!ndfa.hasMatch('a'));
   assert (!ndfa.hasMatch('b'));

@@ -1,3 +1,6 @@
+# Ignore script output
+out/
+
 # IntelliJ Idea stuff
 .idea/
 
