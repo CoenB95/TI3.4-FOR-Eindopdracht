@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:TI3/formal_language.dart';
+import 'package:TI3/testcases.dart';
 
 main(List<String> arguments) {
   print('Hello world!');
@@ -10,44 +11,18 @@ main(List<String> arguments) {
 
 void testCase1_1() {
   print("\nTesting Contains 'ab', deterministic");
-
-  var ndfa = FiniteAutomaton();
-  var q0 = FiniteAutomatonState('q0');
-  var q1 = FiniteAutomatonState('q1');
-  var q2 = FiniteAutomatonState('q2', endState: true);
-
-  ndfa.addStartState(q0);
-  q0.addTransition('a', q1);
-  q0.addTransition('b', q0);
-  q1.addTransition('a', q1);
-  q1.addTransition('b', q2);
-  q2.addTransition('a', q2);
-  q2.addTransition('b', q2);
-
+  var ndfa = LessonTestSets.testset1();
   testContainsAB(ndfa);
 }
 
 void testCase1_2() {
   print("\nTesting Contains 'ab', non-deterministic");
-
-  var ndfa = FiniteAutomaton();
-  var q0 = FiniteAutomatonState('q0');
-  var q1 = FiniteAutomatonState('q1');
-  var q2 = FiniteAutomatonState('q2', endState: true);
-
-  ndfa.addStartState(q0);
-  q0.addTransition('a', q0);
-  q0.addTransition('b', q0);
-  q0.addTransition('a', q1);
-  q1.addTransition('b', q2);
-  q2.addTransition('a', q2);
-  q2.addTransition('b', q2);
-
+  var ndfa = LessonTestSets.testset1();
   testContainsAB(ndfa);
 }
 
 int graphCount = 0;
-void testContainsAB(FiniteAutomaton ndfa) async {
+void testContainsAB(NonDeterministicFiniteAutomaton ndfa) async {
   graphCount++;
 
   print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
