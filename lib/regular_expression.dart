@@ -58,44 +58,39 @@ class RegularExpression {
     return result;
   }
 
-  Set<String> generate(int maxCharCount) {
+  Set<String> generate({int maxSteps = 5}) {
     Set<String> emptyLanguage = SplayTreeSet<String>(compareByLength);
     Set<String> languageResult = SplayTreeSet<String>(compareByLength);
 
     Set<String> languageLeft, languageRight;
 
-    if (maxCharCount < 1) return {};
+    maxSteps--;
+    if (maxSteps < 0) return {};
 
     switch (this.operator) {
       case Operator.ONE:
         languageResult.add(terminals);
         break;
       case Operator.OR:
-        languageLeft =
-        left == null ? emptyLanguage : left.generate(maxCharCount - 1);
-        languageRight =
-        right == null ? emptyLanguage : right.generate(maxCharCount - 1);
+        languageLeft = left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
+        languageRight = right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
         languageResult.addAll(languageLeft);
         languageResult.addAll(languageRight);
         break;
       case Operator.DOT:
-        languageLeft =
-        left == null ? emptyLanguage : left.generate(maxCharCount - 1);
-        languageRight =
-        right == null ? emptyLanguage : right.generate(maxCharCount - 1);
+        languageLeft = left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
+        languageRight = right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
         for (String s1 in languageLeft)
           for (String s2 in languageRight) {
             languageResult.add(s1 + s2);
           }
         break;
-
-    // STAR(*) en PLUS(+) kunnen we bijna op dezelfde manier uitwerken:
       case Operator.STAR:
       case Operator.PLUS:
         languageLeft =
-        left == null ? emptyLanguage : left.generate(maxCharCount - 1);
+        left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
         languageResult.addAll(languageLeft);
-        for (int i = 1; i < maxCharCount; i++) {
+        for (int i = 1; i < maxSteps; i++) {
           HashSet<String> languageTemp = HashSet.from(languageResult);
           for (String s1 in languageLeft) {
             for (String s2 in languageTemp) {
@@ -108,8 +103,7 @@ class RegularExpression {
         }
         break;
       default:
-        print(
-            "getLanguage is nog niet gedefinieerd voor de operator: $operator");
+        throw StateError("Error generating language from regex: unknown operator '$operator'");
         break;
     }
     return languageResult;

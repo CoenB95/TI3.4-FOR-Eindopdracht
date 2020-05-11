@@ -30,7 +30,7 @@ class FiniteAutomatonState implements FormalLanguage {
   }
 
   @override
-  Set<String> generate(int maxCharCount) {
+  Set<String> generate({int maxSteps = 5}) {
     return null;
   }
 
@@ -179,7 +179,7 @@ class NonDeterministicFiniteAutomaton implements FormalLanguage {
     _startStates.add(state);
   }
 
-  Set<String> generate(int maxCharCount) {
+  Set<String> generate({int maxSteps = 5}) {
     return null;
   }
   

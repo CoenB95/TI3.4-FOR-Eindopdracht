@@ -11,25 +11,32 @@ main(List<String> arguments) {
 }
 
 void testCase1_1() {
-  print("\nTesting Contains 'ab', deterministic");
+  print("\nDFA: Testing Contains 'ab', deterministic");
   var ndfa = LessonTestSets.testset1();
   testContainsAB(ndfa,
       expectDeterministic: true);
 }
 
 void testCase1_2() {
-  print("\nTesting Contains 'ab', non-deterministic");
+  print("\nDFA: Testing Contains 'ab', non-deterministic");
   var ndfa = LessonTestSets.testset2();
   testContainsAB(ndfa,
       expectDeterministic: false);
 }
 
 void testCase1_3() {
-  print("\nTesting Contains 'ab', regular expression generation");
+  print("Regex: Generating language, contains 'ab'");
   var reg = LessonTestSets.testset3();
-  print('Language (max: 4):');
-  var lang = reg.generate(4);
-  print(lang);
+  print('Language (max: 5):');
+  var lang = reg.generate(maxSteps: 5);
+  lang.forEach((w) => print('-> $w'));
+
+  print("DFA: Testing Contains 'ab' using regex, deterministic");
+  var dfa = LessonTestSets.testset1();
+  lang.forEach((w) { assert(dfa.hasMatch(w)); });
+  print("DFA: Testing Contains 'ab' using regex, non-deterministic");
+  var ndfa = LessonTestSets.testset2();
+  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
 }
 
 int graphCount = 0;
