@@ -1,15 +1,15 @@
+import 'package:TI3/alphabet.dart';
 import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/regular_expression.dart';
 
 class LessonTestSets {
   //DFA: contains 'ab'
   static NonDeterministicFiniteAutomaton testset1() {
-    var dfa = NonDeterministicFiniteAutomaton();
-    var q0 = FiniteAutomatonState('q0');
-    var q1 = FiniteAutomatonState('q1');
-    var q2 = FiniteAutomatonState('q2', endState: true);
+    var dfa = NonDeterministicFiniteAutomaton(Alphabet.ab());
+    var q0 = dfa.createState('q0', startState: true);
+    var q1 = dfa.createState('q1');
+    var q2 = dfa.createState('q2', endState: true);
 
-    dfa.addStartState(q0);
     q0.addTransition(q1, 'a');
     q0.addTransition(q0, 'b');
     q1.addTransition(q1, 'a');
@@ -22,12 +22,11 @@ class LessonTestSets {
 
   ///NDFA: contains 'ab'
   static NonDeterministicFiniteAutomaton testset2() {
-    var ndfa = NonDeterministicFiniteAutomaton();
-    var q0 = FiniteAutomatonState('q0');
-    var q1 = FiniteAutomatonState('q1');
-    var q2 = FiniteAutomatonState('q2', endState: true);
+    var ndfa = NonDeterministicFiniteAutomaton(Alphabet.ab());
+    var q0 = ndfa.createState('q0', startState: true);
+    var q1 = ndfa.createState('q1');
+    var q2 = ndfa.createState('q2', endState: true);
 
-    ndfa.addStartState(q0);
     q0.addTransition(q0, 'a');
     q0.addTransition(q0, 'b');
     q0.addTransition(q1, 'a');

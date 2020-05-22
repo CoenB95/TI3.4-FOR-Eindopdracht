@@ -8,20 +8,32 @@ main(List<String> arguments) {
   testCase1_1();
   testCase1_2();
   testCase1_3();
+  var ndfa = NonDeterministicFiniteAutomaton.startWith("input");
+  createGraph(ndfa, "input");
+}
+
+void createGraph(NonDeterministicFiniteAutomaton ndfa, String name) async {
+  print("Generating graph '$name'...");
+  String graph = ndfa.toGraph();
+  String graphName = 'out/${name}';
+  File graphTempFile = File('${graphName}.gv');
+  await graphTempFile.writeAsString(graph);
+  await Process.run('dot', ['-Tpng', '-o${graphName}.png', '${graphName}.gv']);
+  print("Exported as ${graphName}.png");
 }
 
 void testCase1_1() {
   print("\nDFA: Testing Contains 'ab', deterministic");
   var ndfa = LessonTestSets.testset1();
-  testContainsAB(ndfa,
-      expectDeterministic: true);
+  testContainsAB(ndfa, expectDeterministic: true);
+  createGraph(ndfa, "test 1.1");
 }
 
 void testCase1_2() {
   print("\nDFA: Testing Contains 'ab', non-deterministic");
   var ndfa = LessonTestSets.testset2();
-  testContainsAB(ndfa,
-      expectDeterministic: false);
+  testContainsAB(ndfa, expectDeterministic: false);
+  createGraph(ndfa, "test 1.2");
 }
 
 void testCase1_3() {
@@ -39,22 +51,11 @@ void testCase1_3() {
   lang.forEach((w) { assert(ndfa.hasMatch(w)); });
 }
 
-int graphCount = 0;
 void testContainsAB(NonDeterministicFiniteAutomaton ndfa, {bool expectDeterministic}) async {
-  graphCount++;
-
-  print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
+    print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
 
   print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
   if (expectDeterministic != null) assert (ndfa.isDeterministic() == expectDeterministic);
-
-  print('Finite automaton graph:');
-  String graph = ndfa.toGraph();
-  String graphName = 'out/graph-${graphCount}';
-  File graphTempFile = File('${graphName}.gv');
-  await graphTempFile.writeAsString(graph);
-  await Process.run('dot', ['-Tpng', '-o${graphName}.png', '${graphName}.gv']);
-  print("Exported as ${graphName}.png");
 
   assert (!ndfa.hasMatch('a'));
   assert (!ndfa.hasMatch('b'));

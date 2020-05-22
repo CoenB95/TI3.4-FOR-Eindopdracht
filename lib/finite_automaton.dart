@@ -1,32 +1,20 @@
+import 'package:TI3/alphabet.dart';
 import 'package:TI3/formal_language.dart';
 
 class FiniteAutomatonState implements FormalLanguage {
+  final Alphabet alphabet;
   final bool endState;
   final String name;
 
   final List<FiniteAutomatonTransition> _transitions = [];
 
-  FiniteAutomatonState(this.name, {this.endState = false});
+  FiniteAutomatonState(this.alphabet, this.name, {this.endState = false});
 
   void addTransition(FiniteAutomatonState nextState, [String symbol]) {
     if (symbol == null)
       _transitions.add(EpsilonTransition(this, nextState));
     else
       _transitions.add(SymbolTransition(this, nextState, symbol));
-  }
-
-  Set<String> _alphabet(List<FiniteAutomatonState> checkedStates) {
-    Set<String> letters = {};
-    if (checkedStates.contains(this))
-      return letters;
-
-    checkedStates.add(this);
-    _transitions.where((t) => !checkedStates.contains(t.nextState)).forEach((t) {
-      letters.add(t.label);
-      letters.addAll(t.nextState._alphabet(checkedStates));
-    });
-
-    return letters;
   }
 
   @override
@@ -52,13 +40,13 @@ class FiniteAutomatonState implements FormalLanguage {
     return validOptions;
   }
 
-  bool _checkDeterministic(Set<String> alphabet, List<FiniteAutomatonState> checkedStates) {
+  bool _checkDeterministic(Alphabet alphabet, List<FiniteAutomatonState> checkedStates) {
     if (checkedStates.contains(this))
       return true;
     else
       checkedStates.add(this);
     
-    for (var c in alphabet) {
+    for (var c in alphabet.letters) {
       if (_transitions.where((t) => t.test(c)).length > 1) {
         return false;
       }
@@ -172,11 +160,43 @@ class EpsilonTransition extends FiniteAutomatonTransition {
 
 class NonDeterministicFiniteAutomaton implements FormalLanguage {
   final List<FiniteAutomatonState> _startStates = [];
+  final Alphabet alphabet;
 
-  Set<String> get alphabet => _startStates.fold(Set<String>(), (a, s) { a.addAll(s._alphabet([])); return a;}).toSet();
+  NonDeterministicFiniteAutomaton(this.alphabet);
 
-  void addStartState(FiniteAutomatonState state) {
-    _startStates.add(state);
+  static NonDeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
+    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet ?? Alphabet.ofString(input));
+    FiniteAutomatonState start = ndfa.createState('S', startState: true);
+    FiniteAutomatonState last = start;
+    for (int i = 0; i < input.length; i++) {
+      String char = input.substring(i, i + 1);
+      FiniteAutomatonState fromState = last;
+      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
+      fromState.addTransition(toState, char);
+      last = toState;
+    }
+    return ndfa;
+  }
+
+  FiniteAutomatonState createState(String name, {bool startState = false, bool endState = false}) {
+    FiniteAutomatonState state = FiniteAutomatonState(alphabet, name, endState: endState);
+    if (startState)
+      _startStates.add(state);
+    return state;
+  }
+
+  static NonDeterministicFiniteAutomaton endsWith(String input, {Alphabet alphabet}) {
+    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet ?? Alphabet.ofString(input));
+    FiniteAutomatonState start = ndfa.createState('S', startState: true);
+    FiniteAutomatonState last = start;
+    for (int i = 0; i < input.length; i++) {
+      String char = input.substring(i, i + 1);
+      FiniteAutomatonState fromState = last;
+      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
+      fromState.addTransition(toState, char);
+      last = toState;
+    }
+    return ndfa;
   }
 
   Set<String> generate({int maxSteps = 5}) {
@@ -215,6 +235,26 @@ class NonDeterministicFiniteAutomaton implements FormalLanguage {
       checkedStates.add(s);
     });
     return transitions;
+  }
+
+  static NonDeterministicFiniteAutomaton startWith(String input, {Alphabet alphabet}) {
+    alphabet = (alphabet ?? Alphabet.ofString(input));
+    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet);
+    FiniteAutomatonState start = ndfa.createState('S', startState: true);
+    FiniteAutomatonState last = start;
+    for (int i = 0; i < input.length; i++) {
+      String char = input.substring(i, i + 1);
+      FiniteAutomatonState fromState = last;
+      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
+      fromState.addTransition(toState, char);
+      last = toState;
+    }
+
+    for (String character in alphabet.letters) {
+      last.addTransition(last, character);
+    }
+
+    return ndfa;
   }
 
   String toGraph() {
