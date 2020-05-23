@@ -1,14 +1,15 @@
 import 'dart:collection';
 
+import 'package:TI3/alphabet.dart';
+import 'package:TI3/formal_language.dart';
+
 enum Operator { PLUS, STAR, OR, DOT, ONE }
 
-class RegularExpression {
-  Operator operator;
-  String terminals;
+class RegularExpression implements FormalLanguage {
+  Alphabet get alphabet => Alphabet(_computeAlphabet());
 
-  // De mogelijke operatoren voor een reguliere expressie (+, *, |, .)
-  // Daarnaast ook een operator definitie voor 1 keer repeteren (default)
-
+  Operator operation;
+  String terminal;
 
   RegularExpression left;
   RegularExpression right;
@@ -21,40 +22,40 @@ class RegularExpression {
     }
   };
 
-  RegularExpression([String p = ""]) {
-    operator = Operator.ONE;
-    terminals = p;
-    left = null;
-    right = null;
+  RegularExpression._impl(this.operation, {this.terminal = '', this.left, this.right});
+
+  factory RegularExpression.one(String terminal) {
+    if (terminal.length != 1)
+      throw StateError('Terminal must be 1 character.');
+    return RegularExpression._impl(Operator.ONE, terminal: terminal);
   }
 
-  RegularExpression plus() {
-    RegularExpression result = RegularExpression();
-    result.operator = Operator.PLUS;
-    result.left = this;
-    return result;
-  }
+  RegularExpression plus() => RegularExpression._impl(Operator.PLUS, left: this);
 
-  RegularExpression star() {
-    RegularExpression result = RegularExpression();
-    result.operator = Operator.STAR;
-    result.left = this;
-    return result;
-  }
+  RegularExpression star() => RegularExpression._impl(Operator.STAR, left: this);
 
-  RegularExpression or(RegularExpression e2) {
-    RegularExpression result = RegularExpression();
-    result.operator = Operator.OR;
-    result.left = this;
-    result.right = e2;
-    return result;
-  }
+  RegularExpression or(RegularExpression e2) => RegularExpression._impl(Operator.OR, left: this, right: e2);
 
-  RegularExpression dot(RegularExpression e2) {
-    RegularExpression result = RegularExpression();
-    result.operator = Operator.DOT;
-    result.left = this;
-    result.right = e2;
+  RegularExpression dot(RegularExpression e2) => RegularExpression._impl(Operator.DOT, left: this, right: e2);
+
+  Set<String> _computeAlphabet() {
+    Set<String> result = {};
+
+    switch (this.operation) {
+      case Operator.ONE:
+        result.add(terminal);
+        break;
+      case Operator.OR:
+      case Operator.DOT:
+      case Operator.STAR:
+      case Operator.PLUS:
+        result.addAll(left == null ? {} : left._computeAlphabet());
+        result.addAll(right == null ? {} : right._computeAlphabet());
+        break;
+      default:
+        throw StateError("Error generating language from regex: unknown operator '$operation'");
+        break;
+    }
     return result;
   }
 
@@ -67,9 +68,9 @@ class RegularExpression {
     maxSteps--;
     if (maxSteps < 0) return {};
 
-    switch (this.operator) {
+    switch (this.operation) {
       case Operator.ONE:
-        languageResult.add(terminals);
+        languageResult.add(terminal);
         break;
       case Operator.OR:
         languageLeft = left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
@@ -98,14 +99,19 @@ class RegularExpression {
             }
           }
         }
-        if (this.operator == Operator.STAR) {
+        if (this.operation == Operator.STAR) {
           languageResult.add("");
         }
         break;
       default:
-        throw StateError("Error generating language from regex: unknown operator '$operator'");
+        throw StateError("Error generating language from regex: unknown operator '$operation'");
         break;
     }
     return languageResult;
+  }
+
+  @override
+  bool hasMatch(String input) {
+    throw UnimplementedError();
   }
 }

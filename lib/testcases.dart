@@ -37,10 +37,28 @@ class LessonTestSets {
     return ndfa;
   }
 
+  // Regex: (a*|b*)ab(a*|b*) "contains ab"
   static RegularExpression testset3() {
-    return RegularExpression('a').star().or(RegularExpression('b').star()).dot(
-      RegularExpression('a').dot(RegularExpression('b')).plus()).dot(
-      RegularExpression('a').star().or(RegularExpression('b').star())
+    return RegularExpression.one('a').star().or(RegularExpression.one('b').star()).dot(
+      RegularExpression.one('a').dot(RegularExpression.one('b')).plus()).dot(
+      RegularExpression.one('a').star().or(RegularExpression.one('b').star())
     );
+  }
+
+  // Regex: (a|bc)*
+  static RegularExpression testset4() {
+    return RegularExpression.one('a').or(
+      RegularExpression.one('b').dot(RegularExpression.one('c')))
+      .star();
+  }
+
+  // Regex: ((ba*b)|(bb)+|(aa)+)+
+  static RegularExpression testset5() {
+    return
+    RegularExpression.one('b').dot(RegularExpression.one('a').star()).dot(RegularExpression.one('b'))
+    .or(RegularExpression.one('b').dot(RegularExpression.one('b')).plus())
+    .or(RegularExpression.one('a').dot(RegularExpression.one('a')).plus())
+    .plus()
+    ;
   }
 }

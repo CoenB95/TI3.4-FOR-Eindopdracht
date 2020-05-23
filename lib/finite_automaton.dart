@@ -26,16 +26,14 @@ class FiniteAutomatonState implements FormalLanguage {
   bool hasMatch(String input) => allMatches(input).isNotEmpty;
 
   Iterable<FiniteAutomatonState> allMatches(String input) {
-    if (input == null || input.isEmpty)
-      return endState ? [this] : [];
+    if (input.isEmpty && endState)
+      return [this];
 
-    String character = input[0];
-    if (!_transitions.any((t) => t.test(character)))
-      return null;
+    String character = input.isEmpty ? input : input[0];
 
     var options = _transitions.where((t) => t.test(character));
     var validOptions = options
-        .map((s) => s.nextState.match(input.substring(1)))
+        .map((s) => s.nextState.match(input.isEmpty ? input : input.substring(1)))
         .where((s) => s != null && s.endState).toList();
     return validOptions;
   }
@@ -83,10 +81,11 @@ class FiniteAutomatonState implements FormalLanguage {
     if (checkedStates.contains(this))
       return [];
 
-    _transitions.where((t) => !checkedStates.contains(t.nextState)).forEach((t) {
+    checkedStates.add(this);
+    for (var t in _transitions) {
       trans.add(t);
-      trans.addAll(t.nextState._listTransitions([this]..addAll(checkedStates)));
-    });
+      trans.addAll(t.nextState._listTransitions(checkedStates));
+    }
 
     return trans;
   }

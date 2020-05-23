@@ -2,12 +2,15 @@ import 'dart:io';
 
 import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/testcases.dart';
+import 'package:TI3/thompson.dart';
 
 main(List<String> arguments) {
   print('Hello world!');
   testCase1_1();
   testCase1_2();
   testCase1_3();
+  testCase1_4();
+  testCase1_5();
   var ndfa = NonDeterministicFiniteAutomaton.startWith("input");
   createGraph(ndfa, "input");
 }
@@ -49,6 +52,28 @@ void testCase1_3() {
   print("DFA: Testing Contains 'ab' using regex, non-deterministic");
   var ndfa = LessonTestSets.testset2();
   lang.forEach((w) { assert(ndfa.hasMatch(w)); });
+}
+
+void testCase1_4({int maxSteps = 5}) {
+  print("\nTest 4: Regex '(a|bc)*' to NDFA (Thompson contruction)");
+  var regex = LessonTestSets.testset4();
+  print('Language (max: $maxSteps):');
+  var lang = regex.generate(maxSteps: maxSteps);
+  lang.forEach((w) => print('-> $w'));
+  var ndfa = Thompson.convertRegexToNDFA(regex);
+  //lang.forEach((w) { assert(ndfa.hasMatch(w)); });
+  createGraph(ndfa, "Test-4-Thompson");
+}
+
+void testCase1_5({int maxSteps = 5}) {
+  print("\nTest 5: Regex '((ba*b)|(bb)+|(aa)+)+' to NDFA (Thompson contruction)");
+  var regex = LessonTestSets.testset5();
+  print('Language (max: $maxSteps):');
+  var lang = regex.generate(maxSteps: maxSteps);
+  lang.forEach((w) => print('-> $w'));
+  var ndfa = Thompson.convertRegexToNDFA(regex);
+  //lang.forEach((w) { assert(ndfa.hasMatch(w)); });
+  createGraph(ndfa, "Test-5-Thompson");
 }
 
 void testContainsAB(NonDeterministicFiniteAutomaton ndfa, {bool expectDeterministic}) async {
