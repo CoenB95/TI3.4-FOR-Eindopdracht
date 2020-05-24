@@ -61,7 +61,7 @@ void testCase1_4({int maxSteps = 5}) {
   var lang = regex.generate(maxSteps: maxSteps);
   lang.forEach((w) => print('-> $w'));
   var ndfa = Thompson.convertRegexToNDFA(regex);
-  //lang.forEach((w) { assert(ndfa.hasMatch(w)); });
+  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
   createGraph(ndfa, "Test-4-Thompson");
 }
 
@@ -72,7 +72,7 @@ void testCase1_5({int maxSteps = 5}) {
   var lang = regex.generate(maxSteps: maxSteps);
   lang.forEach((w) => print('-> $w'));
   var ndfa = Thompson.convertRegexToNDFA(regex);
-  //lang.forEach((w) { assert(ndfa.hasMatch(w)); });
+  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
   createGraph(ndfa, "Test-5-Thompson");
 }
 

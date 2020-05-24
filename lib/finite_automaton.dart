@@ -1,5 +1,6 @@
 import 'package:TI3/alphabet.dart';
 import 'package:TI3/formal_language.dart';
+import 'package:characters/characters.dart';
 
 class FiniteAutomatonState implements FormalLanguage {
   final Alphabet alphabet;
@@ -23,19 +24,15 @@ class FiniteAutomatonState implements FormalLanguage {
   }
 
   @override
-  bool hasMatch(String input) => allMatches(input).isNotEmpty;
-
-  Iterable<FiniteAutomatonState> allMatches(String input) {
-    if (input.isEmpty && endState)
-      return [this];
-
-    String character = input.isEmpty ? input : input[0];
-
-    var options = _transitions.where((t) => t.test(character));
-    var validOptions = options
-        .map((s) => s.nextState.match(input.isEmpty ? input : input.substring(1)))
-        .where((s) => s != null && s.endState).toList();
-    return validOptions;
+  bool hasMatch(String input) {
+    // In case we've reached the end of the string:
+    // Check to see if we are in a end-state (= match).
+    // Otherwise, check if we can reach a different end-state still using epsilon-transitions.
+    if (input.isEmpty)
+      return _eClosure().any((s) => s.endState);
+    
+    String symbol = input.characters.first;
+    return _deltaE(symbol).any((s) => s.hasMatch(input.substring(1)));
   }
 
   bool _checkDeterministic(Alphabet alphabet, List<FiniteAutomatonState> checkedStates) {
@@ -58,9 +55,16 @@ class FiniteAutomatonState implements FormalLanguage {
     return true;
   }
 
-  FiniteAutomatonState match(String input) {
-    var validOptions = allMatches(input);
-    return (validOptions?.isEmpty ?? true) ? null : validOptions.first;
+  Set<FiniteAutomatonState> _delta(String symbol) {
+    return _transitions.where((t) => t.test(symbol)).map((t) => t.nextState).toSet();
+  }
+
+  Set<FiniteAutomatonState> _deltaE(String symbol) {
+    return _eClosure().expand((s) => s._transitions).where((t) => t.test(symbol)).map((t) => t.nextState).toSet();
+  }
+
+  Set<FiniteAutomatonState> _eClosure() {
+    return _transitions.where((t) => t.test()).expand((t) => t.nextState._eClosure()).toSet()..add(this);
   }
 
   List<FiniteAutomatonState> _listStates(List<FiniteAutomatonState> checkedStates) {
@@ -101,7 +105,7 @@ abstract class FiniteAutomatonTransition {
 
   FiniteAutomatonTransition(this.oldState, this.nextState);
 
-  bool test(String symbol);
+  bool test([String symbol]);
 }
 
 class SymbolTransition extends FiniteAutomatonTransition {
@@ -111,7 +115,7 @@ class SymbolTransition extends FiniteAutomatonTransition {
   SymbolTransition(FiniteAutomatonState oldState, FiniteAutomatonState nextState, this._symbol) : super(oldState, nextState);
 
   @override
-  bool test(String symbol) => symbol == _symbol;
+  bool test([String symbol]) => _symbol == symbol;
 
   @override
   bool operator ==(Object other) =>
@@ -138,7 +142,7 @@ class EpsilonTransition extends FiniteAutomatonTransition {
   EpsilonTransition(oldState, nextState) : super(oldState, nextState);
 
   @override
-  bool test(String symbol) => true;
+  bool test([String symbol]) => true;
 
   @override
   bool operator ==(Object other) =>
@@ -158,9 +162,10 @@ class EpsilonTransition extends FiniteAutomatonTransition {
 }
 
 class NonDeterministicFiniteAutomaton implements FormalLanguage {
-  final List<FiniteAutomatonState> _startStates = [];
+  final Set<FiniteAutomatonState> _startStates = {};
   final Alphabet alphabet;
 
+  Set<FiniteAutomatonState> get startStates => _startStates;
   NonDeterministicFiniteAutomaton(this.alphabet);
 
   static NonDeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
