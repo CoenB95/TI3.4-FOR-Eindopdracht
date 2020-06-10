@@ -94,6 +94,8 @@ class FiniteAutomatonState implements FormalLanguage {
     return trans;
   }
 
+  FiniteAutomatonState next(String symbol) => _delta(symbol).first;
+
   @override
   String toString() => 'State{name=$name${endState ? ', isEnd' : ''}}';
 }
@@ -109,13 +111,13 @@ abstract class FiniteAutomatonTransition {
 }
 
 class SymbolTransition extends FiniteAutomatonTransition {
-  final String _symbol;
-  String get label => _symbol;
+  final String symbol;
+  String get label => symbol;
 
-  SymbolTransition(FiniteAutomatonState oldState, FiniteAutomatonState nextState, this._symbol) : super(oldState, nextState);
+  SymbolTransition(FiniteAutomatonState oldState, FiniteAutomatonState nextState, this.symbol) : super(oldState, nextState);
 
   @override
-  bool test([String symbol]) => _symbol == symbol;
+  bool test([String symbol]) => this.symbol == symbol;
 
   @override
   bool operator ==(Object other) =>
@@ -124,16 +126,16 @@ class SymbolTransition extends FiniteAutomatonTransition {
               runtimeType == other.runtimeType &&
               nextState == other.nextState &&
               oldState == other.oldState &&
-              _symbol == other._symbol;
+              symbol == other.symbol;
 
   @override
   int get hashCode =>
       nextState.hashCode ^
       oldState.hashCode ^
-      _symbol.hashCode;
+      symbol.hashCode;
 
   @override
-  String toString() => '$oldState --$_symbol--> $nextState';
+  String toString() => '$oldState --$symbol--> $nextState';
 }
 
 class EpsilonTransition extends FiniteAutomatonTransition {
