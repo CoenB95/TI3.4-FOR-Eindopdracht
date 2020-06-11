@@ -150,7 +150,7 @@ abstract class FiniteAutomaton implements FormalLanguage {
     buffer.writeln('NOTHING [label="", shape=none]');
     _states.toSet().forEach((s) {
       buffer.write('${s.name} [label="${s.name}", shape=ellipse');
-      if (s.isStartState) buffer.write(', color=cyan');
+      if (s.isStartState) buffer.write(', color=cyan, style=filled');
       if (s.isEndState) buffer.write(', peripheries=2');
       buffer.writeln(']');
     });
