@@ -1,111 +1,23 @@
-import 'package:TI3/alphabet.dart';
-import 'package:TI3/formal_language.dart';
-import 'package:characters/characters.dart';
+import 'alphabet.dart';
+import 'formal_language.dart';
 
-class FiniteAutomatonState implements FormalLanguage {
-  final Alphabet alphabet;
-  final bool endState;
+class FiniteAutomatonState {
+  final bool isEndState;
+  final bool isStartState;
   final String name;
 
-  final List<FiniteAutomatonTransition> _transitions = [];
-
-  FiniteAutomatonState(this.alphabet, this.name, {this.endState = false});
-
-  void addTransition(FiniteAutomatonState nextState, [String symbol]) {
-    if (symbol == null)
-      _transitions.add(EpsilonTransition(this, nextState));
-    else
-      _transitions.add(SymbolTransition(this, nextState, symbol));
-  }
+  FiniteAutomatonState(this.name, {this.isStartState = false, this.isEndState = false});
 
   @override
-  Set<String> generate({int maxSteps = 5}) {
-    return null;
-  }
-
-  @override
-  bool hasMatch(String input) {
-    // In case we've reached the end of the string:
-    // Check to see if we are in a end-state (= match).
-    // Otherwise, check if we can reach a different end-state still using epsilon-transitions.
-    if (input.isEmpty)
-      return _eClosure().any((s) => s.endState);
-    
-    String symbol = input.characters.first;
-    return _deltaE(symbol).any((s) => s.hasMatch(input.substring(1)));
-  }
-
-  bool _checkDeterministic(Alphabet alphabet, List<FiniteAutomatonState> checkedStates) {
-    if (checkedStates.contains(this))
-      return true;
-    else
-      checkedStates.add(this);
-    
-    for (var c in alphabet.letters) {
-      if (_transitions.where((t) => t.test(c)).length > 1) {
-        return false;
-      }
-    }
-    
-    for (var t in _transitions) {
-      if (!t.nextState._checkDeterministic(alphabet, checkedStates))
-        return false;
-    }
-
-    return true;
-  }
-
-  Set<FiniteAutomatonState> _delta(String symbol) {
-    return _transitions.where((t) => t.test(symbol)).map((t) => t.nextState).toSet();
-  }
-
-  Set<FiniteAutomatonState> _deltaE(String symbol) {
-    return _eClosure().expand((s) => s._transitions).where((t) => t.test(symbol)).map((t) => t.nextState).toSet();
-  }
-
-  Set<FiniteAutomatonState> _eClosure() {
-    return _transitions.where((t) => t.test()).expand((t) => t.nextState._eClosure()).toSet()..add(this);
-  }
-
-  List<FiniteAutomatonState> _listStates(List<FiniteAutomatonState> checkedStates) {
-    List<FiniteAutomatonState> states = [];
-    if (checkedStates.contains(this))
-      return [];
-
-    _transitions.where((t) => !checkedStates.contains(t.nextState)).forEach((t) {
-      states.add(t.nextState);
-      states.addAll(t.nextState._listStates([this]..addAll(checkedStates)));
-    });
-
-    return states;
-  }
-
-  List<FiniteAutomatonTransition> _listTransitions(List<FiniteAutomatonState> checkedStates) {
-    List<FiniteAutomatonTransition> trans = [];
-    if (checkedStates.contains(this))
-      return [];
-
-    checkedStates.add(this);
-    for (var t in _transitions) {
-      trans.add(t);
-      trans.addAll(t.nextState._listTransitions(checkedStates));
-    }
-
-    return trans;
-  }
-
-  FiniteAutomatonState next(String symbol) => _delta(symbol).first;
-
-  @override
-  String toString() => 'State{name=$name${endState ? ', isEnd' : ''}}';
+  String toString() => 'State (name=$name${isStartState ? ', isStart' : ''}${isEndState ? ', isEnd' : ''})';
 }
 
 abstract class FiniteAutomatonTransition {
-  final FiniteAutomatonState oldState;
-  final FiniteAutomatonState nextState;
+  final FiniteAutomatonState fromState;
+  final FiniteAutomatonState toState;
   String get label;
 
-  FiniteAutomatonTransition(this.oldState, this.nextState);
+  FiniteAutomatonTransition(this.fromState, this.toState);
 
   bool test([String symbol]);
 }
@@ -122,20 +34,19 @@ class SymbolTransition extends FiniteAutomatonTransition {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is SymbolTransition &&
-              runtimeType == other.runtimeType &&
-              nextState == other.nextState &&
-              oldState == other.oldState &&
-              symbol == other.symbol;
+      other is SymbolTransition &&
+      fromState == other.fromState &&
+      toState == other.toState &&
+      symbol == other.symbol;
 
   @override
   int get hashCode =>
-      nextState.hashCode ^
-      oldState.hashCode ^
+      fromState.hashCode ^
+      toState.hashCode ^
       symbol.hashCode;
 
   @override
-  String toString() => '$oldState --$symbol--> $nextState';
+  String toString() => '$fromState --$symbol--> $toState';
 }
 
 class EpsilonTransition extends FiniteAutomatonTransition {
@@ -149,118 +60,55 @@ class EpsilonTransition extends FiniteAutomatonTransition {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is EpsilonTransition &&
-              runtimeType == other.runtimeType &&
-              nextState == other.nextState &&
-              oldState == other.oldState;
+      other is EpsilonTransition &&        
+      fromState == other.fromState &&
+      toState == other.toState;
 
   @override
   int get hashCode =>
-      nextState.hashCode ^
-      oldState.hashCode;
+      fromState.hashCode ^
+      toState.hashCode;
 
   @override
-  String toString() => '$oldState --?--> $nextState';
+  String toString() => '$fromState --?--> $toState';
 }
 
-class NonDeterministicFiniteAutomaton implements FormalLanguage {
-  final Set<FiniteAutomatonState> _startStates = {};
+abstract class FiniteAutomaton implements FormalLanguage {
+  final Set<FiniteAutomatonState> _states = {};
+  final Set<FiniteAutomatonTransition> _transitions = {};
   final Alphabet alphabet;
 
-  Set<FiniteAutomatonState> get startStates => _startStates;
-  NonDeterministicFiniteAutomaton(this.alphabet);
+  Iterable<FiniteAutomatonState> get startStates => _states.where((s) => s.isStartState);
+  Iterable<FiniteAutomatonState> get states => List.unmodifiable(_states);
+  Iterable<FiniteAutomatonTransition> get transitions => List.unmodifiable(_transitions);
+  
+  FiniteAutomaton(this.alphabet);
 
-  static NonDeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
-    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet ?? Alphabet.ofString(input));
-    FiniteAutomatonState start = ndfa.createState('S', startState: true);
-    FiniteAutomatonState last = start;
-    for (int i = 0; i < input.length; i++) {
-      String char = input.substring(i, i + 1);
-      FiniteAutomatonState fromState = last;
-      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      fromState.addTransition(toState, char);
-      last = toState;
-    }
-    return ndfa;
+  void addTransition(FiniteAutomatonState fromState, FiniteAutomatonState toState, [String symbol]) {
+    if (symbol == null)
+      _transitions.add(EpsilonTransition(fromState, toState));
+    else
+      _transitions.add(SymbolTransition(fromState, toState, symbol));
   }
 
   FiniteAutomatonState createState(String name, {bool startState = false, bool endState = false}) {
-    FiniteAutomatonState state = FiniteAutomatonState(alphabet, name, endState: endState);
-    if (startState)
-      _startStates.add(state);
+    FiniteAutomatonState state = FiniteAutomatonState(name, isStartState: startState, isEndState: endState);
+    _states.add(state);
     return state;
   }
 
-  static NonDeterministicFiniteAutomaton endsWith(String input, {Alphabet alphabet}) {
-    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet ?? Alphabet.ofString(input));
-    FiniteAutomatonState start = ndfa.createState('S', startState: true);
-    FiniteAutomatonState last = start;
-    for (int i = 0; i < input.length; i++) {
-      String char = input.substring(i, i + 1);
-      FiniteAutomatonState fromState = last;
-      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      fromState.addTransition(toState, char);
-      last = toState;
-    }
-    return ndfa;
-  }
-
-  Set<String> generate({int maxSteps = 5}) {
-    return null;
-  }
-  
-  @override
-  bool hasMatch(String input) {
-    var state = _startStates.firstWhere((s) => s.hasMatch(input), orElse: () => null);
-    return state != null;
-  }
-
+  /// Check whether this FiniteAutomaton is a DFA (fully-defined transitions between states).
   bool isDeterministic() {
-    //Check that there are *no* cases of *non*-deterministic branches (double-negative).
-    var safe = !_startStates.any((s) => !s._checkDeterministic(alphabet, []));
-    return safe;
-  }
-
-  List<FiniteAutomatonState> listAllStates() {
-    List<FiniteAutomatonState> checkedStates = [];
-    List<FiniteAutomatonState> states = [];
-
-    _startStates.forEach((s) {
-      states.addAll(s._listStates(checkedStates));
-      checkedStates.add(s);
-    });
-
-    return states;
-  }
-
-  List<FiniteAutomatonTransition> listAllTransitions() {
-    List<FiniteAutomatonState> checkedStates = [];
-    List<FiniteAutomatonTransition> transitions = [];
-    _startStates.forEach((s) {
-      transitions.addAll(s._listTransitions(checkedStates));
-      checkedStates.add(s);
-    });
-    return transitions;
-  }
-
-  static NonDeterministicFiniteAutomaton startWith(String input, {Alphabet alphabet}) {
-    alphabet = (alphabet ?? Alphabet.ofString(input));
-    NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet);
-    FiniteAutomatonState start = ndfa.createState('S', startState: true);
-    FiniteAutomatonState last = start;
-    for (int i = 0; i < input.length; i++) {
-      String char = input.substring(i, i + 1);
-      FiniteAutomatonState fromState = last;
-      FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      fromState.addTransition(toState, char);
-      last = toState;
+    // Check whether every state has exactly ONE transition to a different state
+    // for every letter from the alphabet.
+    for (var s in _states) {
+      for (var c in alphabet.letters) {
+        if (_transitions.where((t) => t.fromState == s && t.test(c)).length != 1) {
+          return false;
+        }
+      }
     }
-
-    for (String character in alphabet.letters) {
-      last.addTransition(last, character);
-    }
-
-    return ndfa;
+    return true;
   }
 
   String toGraph() {
@@ -268,20 +116,19 @@ class NonDeterministicFiniteAutomaton implements FormalLanguage {
     buffer.writeln('digraph dfa {');
     buffer.writeln('rankdir=LR');
     buffer.writeln();
-    List<FiniteAutomatonState> states = listAllStates();
     buffer.writeln('NOTHING [label="", shape=none]');
-    states.toSet().forEach((s) {
+    _states.toSet().forEach((s) {
       buffer.write('${s.name} [label="${s.name}", shape=ellipse');
-      if (s.endState) buffer.write(', peripheries=2');
+      if (s.isStartState) buffer.write(', color=cyan');
+      if (s.isEndState) buffer.write(', peripheries=2');
       buffer.writeln(']');
     });
     buffer.writeln();
-    List<FiniteAutomatonTransition> transitions = listAllTransitions();
-    _startStates.forEach((s) {
+    startStates.forEach((s) {
       buffer.writeln('NOTHING -> ${s.name}');
     });
-    transitions.forEach((t) {
-      buffer.writeln('${t.oldState.name} -> ${t.nextState.name} [label="${t.label}"]');
+    _transitions.forEach((t) {
+      buffer.writeln('${t.fromState.name} -> ${t.toState.name} [label="${t.label}"]');
     });
     buffer.writeln('}');
     return buffer.toString();

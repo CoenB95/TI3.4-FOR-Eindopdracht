@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:TI3/finite_automaton.dart';
+import 'package:TI3/ndfa.dart';
 import 'package:TI3/testcases.dart';
 import 'package:TI3/thompson.dart';
 
@@ -77,7 +77,7 @@ void testCase1_5({int maxSteps = 5}) {
 }
 
 void testContainsAB(NonDeterministicFiniteAutomaton ndfa, {bool expectDeterministic}) async {
-    print('Transitions:\n -${ndfa.listAllTransitions().join('\n -')}');
+    print('Transitions:\n -${ndfa.transitions.join('\n -')}');
 
   print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
   if (expectDeterministic != null) assert (ndfa.isDeterministic() == expectDeterministic);

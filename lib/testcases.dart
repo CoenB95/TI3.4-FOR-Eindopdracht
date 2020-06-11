@@ -1,6 +1,6 @@
-import 'package:TI3/alphabet.dart';
-import 'package:TI3/finite_automaton.dart';
-import 'package:TI3/regular_expression.dart';
+import 'alphabet.dart';
+import 'ndfa.dart';
+import 'regular_expression.dart';
 
 class LessonTestSets {
   //DFA: contains 'ab'
@@ -10,12 +10,12 @@ class LessonTestSets {
     var q1 = dfa.createState('q1');
     var q2 = dfa.createState('q2', endState: true);
 
-    q0.addTransition(q1, 'a');
-    q0.addTransition(q0, 'b');
-    q1.addTransition(q1, 'a');
-    q1.addTransition(q2, 'b');
-    q2.addTransition(q2, 'a');
-    q2.addTransition(q2, 'b');
+    dfa.addTransition(q0, q1, 'a');
+    dfa.addTransition(q0, q0, 'b');
+    dfa.addTransition(q1, q1, 'a');
+    dfa.addTransition(q1, q2, 'b');
+    dfa.addTransition(q2, q2, 'a');
+    dfa.addTransition(q2, q2, 'b');
 
     return dfa;
   }
@@ -27,12 +27,12 @@ class LessonTestSets {
     var q1 = ndfa.createState('q1');
     var q2 = ndfa.createState('q2', endState: true);
 
-    q0.addTransition(q0, 'a');
-    q0.addTransition(q0, 'b');
-    q0.addTransition(q1, 'a');
-    q1.addTransition(q2, 'b');
-    q2.addTransition(q2, 'a');
-    q2.addTransition(q2, 'b');
+    ndfa.addTransition(q0, q0, 'a');
+    ndfa.addTransition(q0, q0, 'b');
+    ndfa.addTransition(q0, q1, 'a');
+    ndfa.addTransition(q1, q2, 'b');
+    ndfa.addTransition(q2, q2, 'a');
+    ndfa.addTransition(q2, q2, 'b');
 
     return ndfa;
   }

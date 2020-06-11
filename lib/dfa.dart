@@ -1,10 +1,50 @@
 import 'dart:collection';
 
-import 'package:TI3/alphabet.dart';
-import 'package:TI3/finite_automaton.dart';
+import 'package:characters/characters.dart';
 
-class DeterministicFiniteAutomaton extends NonDeterministicFiniteAutomaton {
+import 'alphabet.dart';
+import 'finite_automaton.dart';
+
+class DeterministicFiniteAutomaton extends FiniteAutomaton  {
   DeterministicFiniteAutomaton(Alphabet alphabet) : super(alphabet);
+
+  @override
+  void addTransition(FiniteAutomatonState fromState, FiniteAutomatonState toState, [String symbol]) {
+    if (transitions.any((t) => t.fromState == fromState && t.test(symbol)))
+      throw UnsupportedError("Cannot add transition to DFA: transition from state '$fromState' with symbol '$symbol' already defined");
+    
+    super.addTransition(fromState, toState, symbol);
+  }
+
+  /// List all the states that can be reached from this state using the supplied symbol.
+  /// Because 
+  FiniteAutomatonState _delta(FiniteAutomatonState state, String symbol) {
+    if (!alphabet.isValid(symbol))
+      throw ArgumentError.value(symbol, 'symbol', 'Not part of alphabet');
+    return transitions.where((t) => t.fromState == state && t.test(symbol)).first.toState;
+  }
+
+  @override
+  Set<String> generate({int maxSteps = 5}) {
+    return null;
+  }
+  
+  @override
+  bool hasMatch(String input) {
+    var startStates = states.where((s) => s.isStartState);
+    return startStates.any((s) => _match(s, input));
+  }
+
+  /// Internal method to recursively check whether the supplied string is accepted by this NDFA.
+  bool _match(FiniteAutomatonState state, String string) {
+    // In case we've reached the end of the string:
+    // Check to see if we are in a end-state (= match).
+    if (string.isEmpty)
+      return state.isEndState;
+    
+    String symbol = string.characters.first;
+    return _match(_delta(state, symbol), string.substring(1));
+  }
 
   DeterministicFiniteAutomaton and(DeterministicFiniteAutomaton other) {
     if (this.alphabet != other.alphabet)
@@ -21,7 +61,7 @@ class DeterministicFiniteAutomaton extends NonDeterministicFiniteAutomaton {
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in alphabet.letters) {
-        var newTuple = TupleFiniteAutomatonState(tuple.stateA.next(char), tuple.stateB.next(char));
+        var newTuple = TupleFiniteAutomatonState(tuple.stateA, tuple.stateB);
         if (tuples.add(newTuple))
           traverseTuples.add(newTuple);
         tupleTransitions.add(TupleTransition(tuple, newTuple, char));
@@ -30,9 +70,9 @@ class DeterministicFiniteAutomaton extends NonDeterministicFiniteAutomaton {
 
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
     for (var tuple in tuples) {
-      var state = dfa.createState('${tuple.stateA.name},${tuple.stateB.name}', startState: tuple == startTuple, endState: tuple.stateA.endState && tuple.stateB.endState);
+      var state = dfa.createState('${tuple.stateA.name},${tuple.stateB.name}', startState: tuple == startTuple, endState: tuple.stateA.isEndState && tuple.stateB.isEndState);
       for (var t in tupleTransitions.where((t) => t.tupleA == tuple)) {
-        state.addTransition(t.tupleB);
+        //state.addTransition(t.tupleB);
       }
     }
   }
