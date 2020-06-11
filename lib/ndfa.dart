@@ -5,6 +5,8 @@ import 'package:characters/characters.dart';
 class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
   NonDeterministicFiniteAutomaton(Alphabet alphabet) : super(alphabet);
 
+  Iterable<FiniteAutomatonState> get startStates => states.where((s) => s.isStartState);
+
   static NonDeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
     NonDeterministicFiniteAutomaton ndfa = NonDeterministicFiniteAutomaton(alphabet ?? Alphabet.ofString(input));
     FiniteAutomatonState start = ndfa.createState('S', startState: true);
@@ -13,7 +15,7 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
       String char = input.substring(i, i + 1);
       FiniteAutomatonState fromState = last;
       FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      ndfa.addTransition(fromState, toState, char);
+      ndfa.createTransition(fromState, toState, char);
       last = toState;
     }
     return ndfa;
@@ -46,14 +48,14 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
       String char = input.substring(i, i + 1);
       FiniteAutomatonState fromState = last;
       FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      ndfa.addTransition(fromState, toState, char);
+      ndfa.createTransition(fromState, toState, char);
       last = toState;
     }
     return ndfa;
   }
 
   Set<String> generate({int maxSteps = 5}) {
-    return null;
+    return {};
   }
   
   @override
@@ -84,8 +86,18 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
     if (string.isEmpty)
       return _eClosure(state).any((s) => s.isEndState);
     
-    String symbol = string.characters.first;
-    return _deltaE(state, symbol).any((s) => _match(s, string.substring(1)));
+    // A true DFA allows transitions to be 'incomplete'; missing transitions for certain characters.
+    // So sometimes we'll need to circle-in-place until a character is read with which we can continue.
+    int i = 0;
+    while (i < string.length) {
+      String symbol = string.characters.elementAt(i);
+      String subString = string.substring(i + 1);
+      if (_deltaE(state, symbol).any((s) => _match(s, subString)))
+        return true;
+      i++;
+    }
+    
+    return _eClosure(state).any((s) => s.isEndState);
   }
 
   static NonDeterministicFiniteAutomaton startWith(String input, {Alphabet alphabet}) {
@@ -97,12 +109,12 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
       String char = input.substring(i, i + 1);
       FiniteAutomatonState fromState = last;
       FiniteAutomatonState toState = ndfa.createState('Q${i + 1}', endState: i + 1 == input.length);
-      ndfa.addTransition(fromState, toState, char);
+      ndfa.createTransition(fromState, toState, char);
       last = toState;
     }
 
     for (String character in alphabet.letters) {
-      ndfa.addTransition(last, last, character);
+      ndfa.createTransition(last, last, character);
     }
 
     return ndfa;

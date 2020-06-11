@@ -8,12 +8,16 @@ import 'finite_automaton.dart';
 class DeterministicFiniteAutomaton extends FiniteAutomaton  {
   DeterministicFiniteAutomaton(Alphabet alphabet) : super(alphabet);
 
+  FiniteAutomatonState get startState => states.where((s) => s.isStartState).first;
+
+  /// Add a new state-transition to this DFA.
+  /// Note that a DFA is extra picky about its uniqueness.
   @override
-  void addTransition(FiniteAutomatonState fromState, FiniteAutomatonState toState, [String symbol]) {
-    if (transitions.any((t) => t.fromState == fromState && t.test(symbol)))
-      throw UnsupportedError("Cannot add transition to DFA: transition from state '$fromState' with symbol '$symbol' already defined");
+  void addTransition(FiniteAutomatonTransition transition) {
+    if (transitions.any((t) => t.equalsTransition(transition)))
+      throw UnsupportedError("Cannot add transition '$transition' to DFA, similar transition already defined for state.");
     
-    super.addTransition(fromState, toState, symbol);
+    super.addTransition(transition);
   }
 
   /// List all the states that can be reached from this state using the supplied symbol.
@@ -26,7 +30,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
 
   @override
   Set<String> generate({int maxSteps = 5}) {
-    return null;
+    return {};
   }
   
   @override
@@ -50,88 +54,52 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     if (this.alphabet != other.alphabet)
       throw ArgumentError("Can't combine DFA's: different Alphabet's");
 
-    if (this.startStates.length != 1 || other.startStates.length != 1)
-      throw StateError('ERRIR');
     
-    var startTuple = TupleFiniteAutomatonState(this.startStates.first, other.startStates.first);
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true);
+    dfa.addState(startTuple);
     var traverseTuples = Queue.of([startTuple]);
-    Set<TupleFiniteAutomatonState> tuples = {startTuple};
-    Set<TupleTransition> tupleTransitions = {};
 
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in alphabet.letters) {
-        var newTuple = TupleFiniteAutomatonState(tuple.stateA, tuple.stateB);
-        if (tuples.add(newTuple))
+        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
+        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
+        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB);
+        if (!dfa.states.contains(newTuple)) {
+          dfa.addState(newTuple);
           traverseTuples.add(newTuple);
-        tupleTransitions.add(TupleTransition(tuple, newTuple, char));
+        }
+        dfa.createTransition(tuple, newTuple, char);
       }
     }
 
-    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    for (var tuple in tuples) {
-      var state = dfa.createState('${tuple.stateA.name},${tuple.stateB.name}', startState: tuple == startTuple, endState: tuple.stateA.isEndState && tuple.stateB.isEndState);
-      for (var t in tupleTransitions.where((t) => t.tupleA == tuple)) {
-        //state.addTransition(t.tupleB);
-      }
-    }
+    return dfa;
   }
 }
 
-// FiniteAutomatonState tuple(FiniteAutomatonState stateA, FiniteAutomatonState stateB) {
-//   if (stateA.alphabet != stateB.alphabet)
-//     throw ArgumentError("Cannot combine two states of different DFA's that have different alphabets");
-
-//   FiniteAutomatonState newState = FiniteAutomatonState(stateA.alphabet, '${stateA.name},${stateB.name}', endState: stateA.endState || stateB.endState);
-//   return newState;
-// }
-
-class TupleFiniteAutomatonState {
+class TupleFiniteAutomatonState extends FiniteAutomatonState {
+  final DeterministicFiniteAutomaton automatonA;
+  final DeterministicFiniteAutomaton automatonB;
   final FiniteAutomatonState stateA;
   final FiniteAutomatonState stateB;
 
-  TupleFiniteAutomatonState(this.stateA, this.stateB);
+  TupleFiniteAutomatonState(this.automatonA, this.stateA, this.automatonB, this.stateB, {bool startState, bool endState})
+   : super(stateA.name + ', ' + stateB.name, isStartState: startState, isEndState: endState);
 
   @override
   bool operator ==(Object other) =>
-    identical(this, other) ||
+      identical(this, other) ||
       other is TupleFiniteAutomatonState &&
-      runtimeType == other.runtimeType &&
+      automatonA == other.automatonA &&
+      automatonB == other.automatonB &&
       stateA == other.stateA &&
       stateB == other.stateB;
-}
-
-class TupleTransition {
-  final TupleFiniteAutomatonState tupleA;
-  final TupleFiniteAutomatonState tupleB;
-  final String symbol;
-
-  TupleTransition(this.tupleA, this.tupleB, this.symbol);
 
   @override
-  bool operator ==(Object other) =>
-    identical(this, other) ||
-      other is TupleTransition &&
-      runtimeType == other.runtimeType &&
-      tupleA == other.tupleA &&
-      tupleB == other.tupleB &&
-      symbol == other.symbol;
+  int get hashCode =>
+      automatonA.hashCode ^
+      automatonB.hashCode ^
+      stateA.hashCode ^
+      stateB.hashCode;
 }
-
-// class TupleFiniteAutomatonState extends FiniteAutomatonState {
-//   final FiniteAutomatonState stateA;
-//   final FiniteAutomatonState stateB;
-
-//   TupleFiniteAutomatonState._(this.stateA, this.stateB) :
-//       super(stateA.alphabet, '${stateA.name},${stateB.name}', endState: stateA.endState || stateB.endState) {
-    
-//   }
-
-//   factory TupleFiniteAutomatonState.of(FiniteAutomatonState stateA, FiniteAutomatonState stateB) {
-//     if (stateA.alphabet != stateB.alphabet)
-//       throw ArgumentError("Cannot combine two states of different DFA's that have different alphabets");
-
-//     TupleFiniteAutomatonState newState = TupleFiniteAutomatonState._(stateA, stateB);
-//     return newState;
-//   }
-// }

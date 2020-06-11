@@ -1,23 +1,139 @@
 import 'dart:io';
 
+import 'package:TI3/finite_automaton.dart';
+import 'package:TI3/formal_language.dart';
 import 'package:TI3/ndfa.dart';
 import 'package:TI3/testcases.dart';
 import 'package:TI3/thompson.dart';
 
+bool breakOnAssertFailure = true;
+
 main(List<String> arguments) {
+  int maxSteps = 5;
   print('Hello world!');
-  testCase1_1();
-  testCase1_2();
-  testCase1_3();
-  testCase1_4();
-  testCase1_5();
-  var ndfa = NonDeterministicFiniteAutomaton.startWith("input");
-  createGraph(ndfa, "input");
+  test1(maxSteps);
+  test2(maxSteps);
+  test3(maxSteps);
+  test4(maxSteps);
+  test5(maxSteps);
+  test6(maxSteps);
+  test7(maxSteps);
 }
 
-void createGraph(NonDeterministicFiniteAutomaton ndfa, String name) async {
+void test1(int maxSteps) {
+  print("\nTest 1: DFA (contains 'ab')");
+  var dfa = TestDFA.containsAB();
+  printLanguage(dfa, maxSteps);
+  assertContainsAB(dfa);
+  createGraph(dfa, "Test 1");
+}
+
+void test2(int maxSteps) {
+  print("\nTest 2: NDFA (contains 'ab')");
+  var ndfa = TestNDFA.containsAB();
+  printLanguage(ndfa, maxSteps);
+  assertContainsAB(ndfa);
+  createGraph(ndfa, "Test 2");
+}
+
+void test3(int maxSteps) {
+  print("\nTest 3: Regex '(a|b)*ab(a|b)*' (contains 'ab')");
+  var regex = TestRegex.containsAB();
+  printLanguage(regex, maxSteps);
+  //assertContainsAB(regex);
+}
+
+void test4(int maxSteps) {
+  print("\nTest 4: Compare 'contains ab' from DFA, NDFA and Regex with each other");
+  var dfa = TestDFA.containsAB();
+  var ndfa = TestNDFA.containsAB();
+  var regex = TestRegex.containsAB();
+
+  print("Test 4a: Compare regex with DFA");
+  assertEqualEachOther(regex, dfa, maxSteps);
+  print("Test 4b: Compare regex with NDFA");
+  assertEqualEachOther(regex, ndfa, maxSteps);
+}
+
+void test5(int maxSteps) {
+  print("\nTest 5: Regex '(a|bc)*' to NDFA (Thompson contruction)");
+  print("Test 5a: The regex");
+  var regex = TestRegex.regex2();
+  printLanguage(regex, maxSteps);
+
+  print("Test 5b: The NDFA converted from said regex");
+  var ndfa = Thompson.convertRegexToNDFA(regex);
+  printAutomatonDetails(ndfa);
+  assertEqualEachOther(regex, ndfa, maxSteps);
+  createGraph(ndfa, "Test 5 (Thompson)");
+}
+
+void test6(int maxSteps) {
+  print("\nTest 6: Regex '((ba*b)|(bb)+|(aa)+)+' to NDFA (Thompson contruction)");
+  print("Test 6a: The regex");
+  var regex = TestRegex.regex3();
+  printLanguage(regex, maxSteps);
+  
+  print("Test 6b: The NDFA converted from said regex");
+  var ndfa = Thompson.convertRegexToNDFA(regex);
+  printAutomatonDetails(ndfa);
+  assertEqualEachOther(regex, ndfa, maxSteps);
+  createGraph(ndfa, "Test 6 (Thompson)");
+}
+
+void test7(int maxSteps) {
+  var ndfa = NonDeterministicFiniteAutomaton.endsWith("baab");
+  createGraph(ndfa, "Test 7");
+}
+
+void assertContainsAB(FormalLanguage fl) async {
+  Set<String> correctValues = {'ab', 'aab', 'aba', 'abb', 'bab', 'aaab', 'aaba', 'aabb', 'abab', 'abaa', 'abba', 'abbb', 'baab', 'baba', 'babb', 'bbab'};
+  Set<String> incorrectValues = {'a', 'b', 'aa', 'ba', 'bb', 'aaa', 'baa', 'bba', 'bbb', 'aaaa', 'baaa', 'bbaa', 'bbba', 'bbbb'};
+  bool failed = false;
+  
+  print('The next values should match the formal language:');
+  for (String value in correctValues) {
+    bool check = fl.hasMatch(value);
+    print(" - '$value': ${check ? 'OK' : 'ERROR'}");
+    if (breakOnAssertFailure)
+      assert(check);
+    else if (!check)
+      failed = true;
+  }
+
+  print('The next values should NOT match the formal language:');
+  for (String value in incorrectValues) {
+    bool check = !fl.hasMatch(value);
+    print(" - !'$value': ${check ? 'OK' : 'ERROR'}");
+    if (breakOnAssertFailure)
+      assert(check);
+    else if (!check)
+      failed = true;
+  }
+
+  print('Assert ${failed ? "Failed" : "Succeeded"}');
+}
+
+void assertEqualEachOther(FormalLanguage fl1, FormalLanguage fl2, int maxSteps) async {
+  Set<String> correctValues = fl1.generate(maxSteps: maxSteps);
+  bool failed = false;
+  
+  print('The next values should match the formal language:');
+  for (String value in correctValues) {
+    bool check = fl2.hasMatch(value);
+    print(" - '$value': ${check ? 'OK' : 'ERROR'}");
+    if (breakOnAssertFailure)
+      assert(fl2.hasMatch(value));
+    else if (!check)
+      failed = true;
+  }
+
+  print('Assert ${failed ? "Failed" : "Succeeded"}');
+}
+
+void createGraph(FiniteAutomaton fa, String name) async {
   print("Generating graph '$name'...");
-  String graph = ndfa.toGraph();
+  String graph = fa.toGraph();
   String graphName = 'out/${name}';
   File graphTempFile = File('${graphName}.gv');
   await graphTempFile.writeAsString(graph);
@@ -25,96 +141,13 @@ void createGraph(NonDeterministicFiniteAutomaton ndfa, String name) async {
   print("Exported as ${graphName}.png");
 }
 
-void testCase1_1() {
-  print("\nDFA: Testing Contains 'ab', deterministic");
-  var ndfa = LessonTestSets.testset1();
-  testContainsAB(ndfa, expectDeterministic: true);
-  createGraph(ndfa, "test 1.1");
+void printAutomatonDetails(FiniteAutomaton fa) {
+  print('Transitions:');
+  fa.transitions.forEach((t) => print(" - $t"));
 }
 
-void testCase1_2() {
-  print("\nDFA: Testing Contains 'ab', non-deterministic");
-  var ndfa = LessonTestSets.testset2();
-  testContainsAB(ndfa, expectDeterministic: false);
-  createGraph(ndfa, "test 1.2");
-}
-
-void testCase1_3() {
-  print("Regex: Generating language, contains 'ab'");
-  var reg = LessonTestSets.testset3();
-  print('Language (max: 5):');
-  var lang = reg.generate(maxSteps: 5);
-  lang.forEach((w) => print('-> $w'));
-
-  print("DFA: Testing Contains 'ab' using regex, deterministic");
-  var dfa = LessonTestSets.testset1();
-  lang.forEach((w) { assert(dfa.hasMatch(w)); });
-  print("DFA: Testing Contains 'ab' using regex, non-deterministic");
-  var ndfa = LessonTestSets.testset2();
-  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
-}
-
-void testCase1_4({int maxSteps = 5}) {
-  print("\nTest 4: Regex '(a|bc)*' to NDFA (Thompson contruction)");
-  var regex = LessonTestSets.testset4();
+void printLanguage(FormalLanguage fl, int maxSteps) {
+  Set<String> lang = fl.generate(maxSteps: maxSteps);
   print('Language (max: $maxSteps):');
-  var lang = regex.generate(maxSteps: maxSteps);
-  lang.forEach((w) => print('-> $w'));
-  var ndfa = Thompson.convertRegexToNDFA(regex);
-  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
-  createGraph(ndfa, "Test-4-Thompson");
-}
-
-void testCase1_5({int maxSteps = 5}) {
-  print("\nTest 5: Regex '((ba*b)|(bb)+|(aa)+)+' to NDFA (Thompson contruction)");
-  var regex = LessonTestSets.testset5();
-  print('Language (max: $maxSteps):');
-  var lang = regex.generate(maxSteps: maxSteps);
-  lang.forEach((w) => print('-> $w'));
-  var ndfa = Thompson.convertRegexToNDFA(regex);
-  lang.forEach((w) { assert(ndfa.hasMatch(w)); });
-  createGraph(ndfa, "Test-5-Thompson");
-}
-
-void testContainsAB(NonDeterministicFiniteAutomaton ndfa, {bool expectDeterministic}) async {
-    print('Transitions:\n -${ndfa.transitions.join('\n -')}');
-
-  print('Is expression a DFA? ${ndfa.isDeterministic() ? 'yes': 'no'}');
-  if (expectDeterministic != null) assert (ndfa.isDeterministic() == expectDeterministic);
-
-  assert (!ndfa.hasMatch('a'));
-  assert (!ndfa.hasMatch('b'));
-
-  assert (!ndfa.hasMatch('aa'));
-  assert (ndfa.hasMatch('ab'));
-  assert (!ndfa.hasMatch('ba'));
-  assert (!ndfa.hasMatch('bb'));
-
-  assert (!ndfa.hasMatch('aaa'));
-  assert (ndfa.hasMatch('aab'));
-  assert (ndfa.hasMatch('aba'));
-  assert (ndfa.hasMatch('abb'));
-  assert (!ndfa.hasMatch('baa'));
-  assert (ndfa.hasMatch('bab'));
-  assert (!ndfa.hasMatch('bba'));
-  assert (!ndfa.hasMatch('bbb'));
-
-  assert (!ndfa.hasMatch('aaaa'));
-  assert (ndfa.hasMatch('aaab'));
-  assert (ndfa.hasMatch('aaba'));
-  assert (ndfa.hasMatch('aabb'));
-  assert (ndfa.hasMatch('abaa'));
-  assert (ndfa.hasMatch('abab'));
-  assert (ndfa.hasMatch('abba'));
-  assert (ndfa.hasMatch('abbb'));
-  assert (!ndfa.hasMatch('baaa'));
-  assert (ndfa.hasMatch('baab'));
-  assert (ndfa.hasMatch('baba'));
-  assert (ndfa.hasMatch('babb'));
-  assert (!ndfa.hasMatch('bbaa'));
-  assert (ndfa.hasMatch('bbab'));
-  assert (!ndfa.hasMatch('bbba'));
-  assert (!ndfa.hasMatch('bbbb'));
-
-  print('All is well with this expression!');
+  lang.forEach((w) => print(" - '$w'"));
 }
