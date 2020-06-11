@@ -25,6 +25,7 @@ void test1(int maxSteps) {
   var dfa = TestDFA.containsAB();
   printLanguage(dfa, maxSteps);
   assertContainsAB(dfa);
+  assertEqualEachOther(dfa, dfa, maxSteps);
   createGraph(dfa, "Test 1");
 }
 

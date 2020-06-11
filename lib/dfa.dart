@@ -30,7 +30,25 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
 
   @override
   Set<String> generate({int maxSteps = 5}) {
-    return {};
+    return _generate(startState, maxSteps);
+  }
+
+  Set<String> _generate(FiniteAutomatonState state, int maxSteps) {
+    Set<String> languageResult = {};
+    if (maxSteps < 0)
+      return languageResult;
+    maxSteps--;
+
+    for (var char in alphabet.letters) {
+      var nextState = _delta(state, char);
+      if (nextState.isEndState) {
+        languageResult.add(char);
+      }
+      languageResult.addAll(_generate(nextState, maxSteps).map((v) => char + v));
+      
+    }
+
+    return languageResult;
   }
   
   @override
