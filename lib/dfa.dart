@@ -74,16 +74,18 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
 
     
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true);
+    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true,
+        endState: this.startState.isEndState && other.startState.isEndState);
     dfa.addState(startTuple);
     var traverseTuples = Queue.of([startTuple]);
 
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
+      print('CHECK ${tuple.name}');
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
-        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB);
+        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB, endState: nextStateA.isEndState && nextStateB.isEndState);
         if (!dfa.states.contains(newTuple)) {
           dfa.addState(newTuple);
           traverseTuples.add(newTuple);
@@ -102,7 +104,7 @@ class TupleFiniteAutomatonState extends FiniteAutomatonState {
   final FiniteAutomatonState stateA;
   final FiniteAutomatonState stateB;
 
-  TupleFiniteAutomatonState(this.automatonA, this.stateA, this.automatonB, this.stateB, {bool startState, bool endState})
+  TupleFiniteAutomatonState(this.automatonA, this.stateA, this.automatonB, this.stateB, {bool startState = false, bool endState = false})
    : super(stateA.name + ', ' + stateB.name, isStartState: startState, isEndState: endState);
 
   @override

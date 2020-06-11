@@ -149,17 +149,17 @@ abstract class FiniteAutomaton implements FormalLanguage {
     buffer.writeln();
     buffer.writeln('NOTHING [label="", shape=none]');
     _states.toSet().forEach((s) {
-      buffer.write('${s.name} [label="${s.name}", shape=ellipse');
+      buffer.write('"${s.name}" [label="${s.name}", shape=ellipse');
       if (s.isStartState) buffer.write(', color=cyan, style=filled');
       if (s.isEndState) buffer.write(', peripheries=2, color=green, style=filled');
       buffer.writeln(']');
     });
     buffer.writeln();
     states.where((s) => s.isStartState).forEach((s) {
-      buffer.writeln('NOTHING -> ${s.name}');
+      buffer.writeln('NOTHING -> "${s.name}"');
     });
     _transitions.forEach((t) {
-      buffer.writeln('${t.fromState.name} -> ${t.toState.name} [label="${t.label}"]');
+      buffer.writeln('"${t.fromState.name}" -> "${t.toState.name}" [label="${t.label}"]');
     });
     buffer.writeln('}');
     return buffer.toString();

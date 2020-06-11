@@ -14,4 +14,11 @@ class Alphabet {
   bool isValid(String word) => !word.characters.any((c) => !_alphabet.contains(c));
 
   Iterable<String> get letters => _alphabet;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Alphabet &&        
+      _alphabet.containsAll(other._alphabet) &&
+      other._alphabet.containsAll(_alphabet);
 }

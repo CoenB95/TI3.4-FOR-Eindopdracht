@@ -83,8 +83,11 @@ void test6(int maxSteps) {
 }
 
 void test7(int maxSteps) {
-  var ndfa = NonDeterministicFiniteAutomaton.endsWith("baab");
-  createGraph(ndfa, "Test 7");
+  //var ndfa1 = NonDeterministicFiniteAutomaton.endsWith("bbab");
+  var ndfa1 = TestDFA.containsAB();
+  var ndfa2 = TestDFA.evenB();
+  var ndfa3 = ndfa1.and(ndfa2);
+  createGraph(ndfa3, "Test 7");
 }
 
 void assertContainsAB(FormalLanguage fl) async {
