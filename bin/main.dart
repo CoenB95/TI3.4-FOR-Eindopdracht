@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:TI3/dfa.dart';
 import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/formal_language.dart';
-import 'package:TI3/ndfa.dart';
 import 'package:TI3/testcases.dart';
 import 'package:TI3/thompson.dart';
 
@@ -11,6 +11,12 @@ bool breakOnAssertFailure = true;
 main(List<String> arguments) {
   int maxSteps = 5;
   print('Hello world!');
+  var dfa1 = DeterministicFiniteAutomaton.startWith("bbabbabba");
+  createGraph(dfa1, "HOI1");
+  var dfa2 = DeterministicFiniteAutomaton.endWith("bbabbabba");
+  createGraph(dfa2, "HOI2");
+  var dfa3 = DeterministicFiniteAutomaton.contains("bbabbabba");
+  createGraph(dfa3, "HOI3");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);

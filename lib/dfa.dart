@@ -20,12 +20,139 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     super.addTransition(transition);
   }
 
+  DeterministicFiniteAutomaton and(DeterministicFiniteAutomaton other) {
+    if (this.alphabet != other.alphabet)
+      throw ArgumentError("Can't combine DFA's: different Alphabet's");
+
+    
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true,
+        endState: this.startState.isEndState && other.startState.isEndState);
+    dfa.addState(startTuple);
+    var traverseTuples = Queue.of([startTuple]);
+
+    while (traverseTuples.isNotEmpty) {
+      var tuple = traverseTuples.removeFirst();
+      print('CHECK ${tuple.name}');
+      for (var char in alphabet.letters) {
+        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
+        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
+        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB, endState: nextStateA.isEndState && nextStateB.isEndState);
+        if (!dfa.states.contains(newTuple)) {
+          dfa.addState(newTuple);
+          traverseTuples.add(newTuple);
+        }
+        dfa.createTransition(tuple, newTuple, char);
+      }
+    }
+
+    return dfa;
+  }
+
+  static DeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
+    alphabet = (alphabet ?? Alphabet.ofString(input));
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    FiniteAutomatonState startState = dfa.createState('S', startState: true);
+    FiniteAutomatonState fromState = startState;
+
+    // Construct the trap.
+    FiniteAutomatonState errorState = dfa.createState('X', endState: false);
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(errorState, errorState, letter);
+    }
+
+    for (int i = 0; i < input.length; i++) {
+      bool isFirstCharOfSequence = i == 0; // First char of end-sequence?
+      bool isLastCharOfSequence = i == input.length - 1; // Final char of end-sequence?
+       
+      String char = input.characters.elementAt(i);
+      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+
+      for (String letter in alphabet.letters) {
+        if (letter == char) {
+          dfa.createTransition(fromState, toState, letter);
+        } else if (isFirstCharOfSequence) {
+          dfa.createTransition(fromState, fromState, letter);
+        } else {
+          dfa.createTransition(fromState, errorState, letter);
+        }
+      }
+
+      if (isLastCharOfSequence) {
+        for (String letter in alphabet.letters) {
+          dfa.createTransition(toState, toState, letter);
+        }
+      }
+
+      fromState = toState;
+    }
+
+    assert (dfa.isDeterministic());
+
+    return dfa;
+  }
+
   /// List all the states that can be reached from this state using the supplied symbol.
   /// Because 
   FiniteAutomatonState _delta(FiniteAutomatonState state, String symbol) {
     if (!alphabet.isValid(symbol))
       throw ArgumentError.value(symbol, 'symbol', 'Not part of alphabet');
     return transitions.where((t) => t.fromState == state && t.test(symbol)).first.toState;
+  }
+
+  static DeterministicFiniteAutomaton endWith(String input, {Alphabet alphabet}) {
+    alphabet = (alphabet ?? Alphabet.ofString(input));
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    FiniteAutomatonState startState = dfa.createState('S', startState: true);
+    FiniteAutomatonState fromState = startState;
+    List<FiniteAutomatonState> states = [startState];
+
+    // Construct the trap.
+    FiniteAutomatonState errorState = dfa.createState('X', endState: false);
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(errorState, errorState, letter);
+    }
+
+    for (int i = 0; i < input.length; i++) {
+      bool isLastCharOfSequence = i == input.length - 1; // Final char of end-sequence?
+       
+      String char = input.characters.elementAt(i);
+      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+      states.add(toState);
+
+      // On each correct letter, go to next state.
+      // Otherwise try to recover to the state that can still be matched.
+      for (String letter in alphabet.letters) {
+        if (letter == char) {
+          dfa.createTransition(fromState, toState, letter);
+        } else {
+          FiniteAutomatonState put;
+          for (int j = 1; j <= i; j++) {
+            var test1 = input.substring(0, i - j + 1);
+            var test2 = input.substring(0 + j, i) + letter;
+            if (test1 == test2) {
+              put = states[i - j + 1];
+              break;
+            }
+          }
+
+          put = put ?? startState;
+          dfa.createTransition(fromState, put, letter);
+        }
+      }
+
+      // Finish: any more characters -> error state.
+      if (isLastCharOfSequence) {
+        for (String letter in alphabet.letters) {
+          dfa.createTransition(toState, errorState, letter);
+        }
+      }
+
+      fromState = toState;
+    }
+
+    assert (dfa.isDeterministic());
+    return dfa;
   }
 
   @override
@@ -68,32 +195,38 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     return _match(_delta(state, symbol), string.substring(1));
   }
 
-  DeterministicFiniteAutomaton and(DeterministicFiniteAutomaton other) {
-    if (this.alphabet != other.alphabet)
-      throw ArgumentError("Can't combine DFA's: different Alphabet's");
-
-    
+  static DeterministicFiniteAutomaton startWith(String input, {Alphabet alphabet}) {
+    alphabet = (alphabet ?? Alphabet.ofString(input));
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true,
-        endState: this.startState.isEndState && other.startState.isEndState);
-    dfa.addState(startTuple);
-    var traverseTuples = Queue.of([startTuple]);
+    FiniteAutomatonState startState = dfa.createState('S', startState: true);
+    FiniteAutomatonState fromState = startState;
 
-    while (traverseTuples.isNotEmpty) {
-      var tuple = traverseTuples.removeFirst();
-      print('CHECK ${tuple.name}');
-      for (var char in alphabet.letters) {
-        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
-        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
-        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB, endState: nextStateA.isEndState && nextStateB.isEndState);
-        if (!dfa.states.contains(newTuple)) {
-          dfa.addState(newTuple);
-          traverseTuples.add(newTuple);
-        }
-        dfa.createTransition(tuple, newTuple, char);
-      }
+    // Construct the trap.
+    FiniteAutomatonState errorState = dfa.createState('X', endState: false);
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(errorState, errorState, letter);
     }
 
+    for (int i = 0; i < input.length; i++) {
+      bool isLastCharOfSequence = i == input.length - 1; // Final char of start-sequence?
+       
+      String char = input.characters.elementAt(i);
+      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+
+      for (String letter in alphabet.letters) {
+        dfa.createTransition(fromState, (char == letter ? toState : errorState), letter);
+      }
+
+      if (isLastCharOfSequence) {
+        for (String letter in alphabet.letters) {
+          dfa.createTransition(toState, toState, letter);
+        }
+      }
+
+      fromState = toState;
+    }
+
+    assert (dfa.isDeterministic());
     return dfa;
   }
 }
