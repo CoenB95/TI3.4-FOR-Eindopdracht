@@ -51,7 +51,8 @@ void test3(int maxSteps) {
 }
 
 void test4(int maxSteps) {
-  print("\nTest 4: Compare 'contains ab' from DFA, NDFA and Regex with each other");
+  print(
+      "\nTest 4: Compare 'contains ab' from DFA, NDFA and Regex with each other");
   var dfa = TestDFA.containsAB();
   var ndfa = TestNDFA.containsAB();
   var regex = TestRegex.containsAB();
@@ -76,11 +77,12 @@ void test5(int maxSteps) {
 }
 
 void test6(int maxSteps) {
-  print("\nTest 6: Regex '((ba*b)|(bb)+|(aa)+)+' to NDFA (Thompson contruction)");
+  print(
+      "\nTest 6: Regex '((ba*b)|(bb)+|(aa)+)+' to NDFA (Thompson contruction)");
   print("Test 6a: The regex");
   var regex = TestRegex.regex3();
   printLanguage(regex, maxSteps);
-  
+
   print("Test 6b: The NDFA converted from said regex");
   var ndfa = Thompson.convertRegexToNDFA(regex);
   printAutomatonDetails(ndfa);
@@ -97,18 +99,49 @@ void test7(int maxSteps) {
 }
 
 void assertContainsAB(FormalLanguage fl) async {
-  Set<String> correctValues = {'ab', 'aab', 'aba', 'abb', 'bab', 'aaab', 'aaba', 'aabb', 'abab', 'abaa', 'abba', 'abbb', 'baab', 'baba', 'babb', 'bbab'};
-  Set<String> incorrectValues = {'a', 'b', 'aa', 'ba', 'bb', 'aaa', 'baa', 'bba', 'bbb', 'aaaa', 'baaa', 'bbaa', 'bbba', 'bbbb'};
+  Set<String> correctValues = {
+    'ab',
+    'aab',
+    'aba',
+    'abb',
+    'bab',
+    'aaab',
+    'aaba',
+    'aabb',
+    'abab',
+    'abaa',
+    'abba',
+    'abbb',
+    'baab',
+    'baba',
+    'babb',
+    'bbab'
+  };
+  Set<String> incorrectValues = {
+    'a',
+    'b',
+    'aa',
+    'ba',
+    'bb',
+    'aaa',
+    'baa',
+    'bba',
+    'bbb',
+    'aaaa',
+    'baaa',
+    'bbaa',
+    'bbba',
+    'bbbb'
+  };
   bool failed = false;
-  
+
   print('The next values should match the formal language:');
   for (String value in correctValues) {
     bool check = fl.hasMatch(value);
     print(" - '$value': ${check ? 'OK' : 'ERROR'}");
     if (breakOnAssertFailure)
       assert(check);
-    else if (!check)
-      failed = true;
+    else if (!check) failed = true;
   }
 
   print('The next values should NOT match the formal language:');
@@ -117,25 +150,24 @@ void assertContainsAB(FormalLanguage fl) async {
     print(" - !'$value': ${check ? 'OK' : 'ERROR'}");
     if (breakOnAssertFailure)
       assert(check);
-    else if (!check)
-      failed = true;
+    else if (!check) failed = true;
   }
 
   print('Assert ${failed ? "Failed" : "Succeeded"}');
 }
 
-void assertEqualEachOther(FormalLanguage fl1, FormalLanguage fl2, int maxSteps) async {
+void assertEqualEachOther(
+    FormalLanguage fl1, FormalLanguage fl2, int maxSteps) async {
   Set<String> correctValues = fl1.generate(maxSteps: maxSteps);
   bool failed = false;
-  
+
   print('The next values should match the formal language:');
   for (String value in correctValues) {
     bool check = fl2.hasMatch(value);
     print(" - '$value': ${check ? 'OK' : 'ERROR'}");
     if (breakOnAssertFailure)
       assert(fl2.hasMatch(value));
-    else if (!check)
-      failed = true;
+    else if (!check) failed = true;
   }
 
   print('Assert ${failed ? "Failed" : "Succeeded"}');
