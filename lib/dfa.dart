@@ -5,18 +5,20 @@ import 'package:characters/characters.dart';
 import 'alphabet.dart';
 import 'finite_automaton.dart';
 
-class DeterministicFiniteAutomaton extends FiniteAutomaton  {
+class DeterministicFiniteAutomaton extends FiniteAutomaton {
   DeterministicFiniteAutomaton(Alphabet alphabet) : super(alphabet);
 
-  FiniteAutomatonState get startState => states.where((s) => s.isStartState).first;
+  FiniteAutomatonState get startState =>
+      states.where((s) => s.isStartState).first;
 
   /// Add a new state-transition to this DFA.
   /// Note that a DFA is extra picky about its uniqueness.
   @override
   void addTransition(FiniteAutomatonTransition transition) {
     if (transitions.any((t) => t.equalsTransition(transition)))
-      throw UnsupportedError("Cannot add transition '$transition' to DFA, similar transition already defined for state.");
-    
+      throw UnsupportedError(
+          "Cannot add transition '$transition' to DFA, similar transition already defined for state.");
+
     super.addTransition(transition);
   }
 
@@ -24,9 +26,10 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     if (this.alphabet != other.alphabet)
       throw ArgumentError("Can't combine DFA's: different Alphabet's");
 
-    
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    var startTuple = TupleFiniteAutomatonState(this, this.startState, other, other.startState, startState: true,
+    var startTuple = TupleFiniteAutomatonState(
+        this, this.startState, other, other.startState,
+        startState: true,
         endState: this.startState.isEndState && other.startState.isEndState);
     dfa.addState(startTuple);
     var traverseTuples = Queue.of([startTuple]);
@@ -37,7 +40,9 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
-        var newTuple = TupleFiniteAutomatonState(tuple.automatonA, nextStateA, tuple.automatonB, nextStateB, endState: nextStateA.isEndState && nextStateB.isEndState);
+        var newTuple = TupleFiniteAutomatonState(
+            tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
+            endState: nextStateA.isEndState && nextStateB.isEndState);
         if (!dfa.states.contains(newTuple)) {
           dfa.addState(newTuple);
           traverseTuples.add(newTuple);
@@ -49,7 +54,11 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     return dfa;
   }
 
-  static DeterministicFiniteAutomaton contains(String input, {Alphabet alphabet}) {
+  /// Constructs a new DFA that only accepts words that contains a specific
+  /// sequence. Any deviation of the supplied sequence will result in the
+  /// DFA denying the input word.
+  static DeterministicFiniteAutomaton contains(String input,
+      {Alphabet alphabet}) {
     alphabet = (alphabet ?? Alphabet.ofString(input));
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
     FiniteAutomatonState startState = dfa.createState('S', startState: true);
@@ -63,10 +72,12 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
 
     for (int i = 0; i < input.length; i++) {
       bool isFirstCharOfSequence = i == 0; // First char of end-sequence?
-      bool isLastCharOfSequence = i == input.length - 1; // Final char of end-sequence?
-       
+      bool isLastCharOfSequence =
+          i == input.length - 1; // Final char of end-sequence?
+
       String char = input.characters.elementAt(i);
-      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+      FiniteAutomatonState toState =
+          dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
 
       for (String letter in alphabet.letters) {
         if (letter == char) {
@@ -87,20 +98,27 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
       fromState = toState;
     }
 
-    assert (dfa.isDeterministic());
+    assert(dfa.isDeterministic());
 
     return dfa;
   }
 
   /// List all the states that can be reached from this state using the supplied symbol.
-  /// Because 
+  /// Because
   FiniteAutomatonState _delta(FiniteAutomatonState state, String symbol) {
     if (!alphabet.isValid(symbol))
       throw ArgumentError.value(symbol, 'symbol', 'Not part of alphabet');
-    return transitions.where((t) => t.fromState == state && t.test(symbol)).first.toState;
+    return transitions
+        .where((t) => t.fromState == state && t.test(symbol))
+        .first
+        .toState;
   }
 
-  static DeterministicFiniteAutomaton endWith(String input, {Alphabet alphabet}) {
+  /// Constructs a new DFA that only accepts words that end with a specific
+  /// sequence. Any deviation of the supplied sequence will result in the
+  /// DFA denying the input word.
+  static DeterministicFiniteAutomaton endWith(String input,
+      {Alphabet alphabet}) {
     alphabet = (alphabet ?? Alphabet.ofString(input));
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
     FiniteAutomatonState startState = dfa.createState('S', startState: true);
@@ -114,10 +132,12 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
     }
 
     for (int i = 0; i < input.length; i++) {
-      bool isLastCharOfSequence = i == input.length - 1; // Final char of end-sequence?
-       
+      bool isLastCharOfSequence =
+          i == input.length - 1; // Final char of end-sequence?
+
       String char = input.characters.elementAt(i);
-      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+      FiniteAutomatonState toState =
+          dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
       states.add(toState);
 
       // On each correct letter, go to next state.
@@ -126,18 +146,19 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
         if (letter == char) {
           dfa.createTransition(fromState, toState, letter);
         } else {
-          FiniteAutomatonState put;
-          for (int j = 1; j <= i; j++) {
-            var test1 = input.substring(0, i - j + 1);
-            var test2 = input.substring(0 + j, i) + letter;
-            if (test1 == test2) {
-              put = states[i - j + 1];
+          // Add the invalid character at the end, then consecutively
+          // reduce the string's length from the front until the string
+          // is considered valid again.
+          FiniteAutomatonState latestValidState = startState;
+          var testString = input.substring(0, i) + letter;
+          for (int j = 0; j < i; j++) {
+            if (input.startsWith(testString.substring(j + 1))) {
+              latestValidState = states[i - j];
               break;
             }
           }
 
-          put = put ?? startState;
-          dfa.createTransition(fromState, put, letter);
+          dfa.createTransition(fromState, latestValidState, letter);
         }
       }
 
@@ -151,7 +172,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
       fromState = toState;
     }
 
-    assert (dfa.isDeterministic());
+    assert(dfa.isDeterministic());
     return dfa;
   }
 
@@ -162,8 +183,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
 
   Set<String> _generate(FiniteAutomatonState state, int maxSteps) {
     Set<String> languageResult = {};
-    if (maxSteps < 0)
-      return languageResult;
+    if (maxSteps < 0) return languageResult;
     maxSteps--;
 
     for (var char in alphabet.letters) {
@@ -171,13 +191,13 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
       if (nextState.isEndState) {
         languageResult.add(char);
       }
-      languageResult.addAll(_generate(nextState, maxSteps).map((v) => char + v));
-      
+      languageResult
+          .addAll(_generate(nextState, maxSteps).map((v) => char + v));
     }
 
     return languageResult;
   }
-  
+
   @override
   bool hasMatch(String input) {
     var startStates = states.where((s) => s.isStartState);
@@ -188,33 +208,43 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
   bool _match(FiniteAutomatonState state, String string) {
     // In case we've reached the end of the string:
     // Check to see if we are in a end-state (= match).
-    if (string.isEmpty)
-      return state.isEndState;
-    
+    if (string.isEmpty) return state.isEndState;
+
     String symbol = string.characters.first;
     return _match(_delta(state, symbol), string.substring(1));
   }
 
-  static DeterministicFiniteAutomaton startWith(String input, {Alphabet alphabet}) {
+  /// Constructs a new DFA that only accepts words that start with a specific
+  /// sequence. Any deviation of the supplied sequence will result in the
+  /// DFA denying the input word.
+  static DeterministicFiniteAutomaton startWith(String input,
+      {Alphabet alphabet}) {
+    // Check whether the input-word can be constructed by the alphabet used.
+    // If no alphabet is supplied, create one based on the input-word.
     alphabet = (alphabet ?? Alphabet.ofString(input));
+    assert(alphabet.isValid(input));
+
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
     FiniteAutomatonState startState = dfa.createState('S', startState: true);
     FiniteAutomatonState fromState = startState;
 
-    // Construct the trap.
+    // Construct the trap (fault-state).
     FiniteAutomatonState errorState = dfa.createState('X', endState: false);
     for (String letter in alphabet.letters) {
       dfa.createTransition(errorState, errorState, letter);
     }
 
     for (int i = 0; i < input.length; i++) {
-      bool isLastCharOfSequence = i == input.length - 1; // Final char of start-sequence?
-       
+      bool isLastCharOfSequence =
+          i == input.length - 1; // Final char of start-sequence?
+
       String char = input.characters.elementAt(i);
-      FiniteAutomatonState toState = dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+      FiniteAutomatonState toState =
+          dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
 
       for (String letter in alphabet.letters) {
-        dfa.createTransition(fromState, (char == letter ? toState : errorState), letter);
+        dfa.createTransition(
+            fromState, (char == letter ? toState : errorState), letter);
       }
 
       if (isLastCharOfSequence) {
@@ -226,7 +256,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton  {
       fromState = toState;
     }
 
-    assert (dfa.isDeterministic());
+    assert(dfa.isDeterministic());
     return dfa;
   }
 }
@@ -237,17 +267,20 @@ class TupleFiniteAutomatonState extends FiniteAutomatonState {
   final FiniteAutomatonState stateA;
   final FiniteAutomatonState stateB;
 
-  TupleFiniteAutomatonState(this.automatonA, this.stateA, this.automatonB, this.stateB, {bool startState = false, bool endState = false})
-   : super(stateA.name + ', ' + stateB.name, isStartState: startState, isEndState: endState);
+  TupleFiniteAutomatonState(
+      this.automatonA, this.stateA, this.automatonB, this.stateB,
+      {bool startState = false, bool endState = false})
+      : super(stateA.name + ', ' + stateB.name,
+            isStartState: startState, isEndState: endState);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TupleFiniteAutomatonState &&
-      automatonA == other.automatonA &&
-      automatonB == other.automatonB &&
-      stateA == other.stateA &&
-      stateB == other.stateB;
+          automatonA == other.automatonA &&
+          automatonB == other.automatonB &&
+          stateA == other.stateA &&
+          stateB == other.stateB;
 
   @override
   int get hashCode =>
