@@ -128,12 +128,6 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     FiniteAutomatonState fromState = startState;
     List<FiniteAutomatonState> states = [startState];
 
-    // Construct the trap.
-    FiniteAutomatonState errorState = dfa.createState('X', endState: false);
-    for (String letter in alphabet.letters) {
-      dfa.createTransition(errorState, errorState, letter);
-    }
-
     for (int i = 0; i < input.length; i++) {
       bool isLastCharOfSequence =
           i == input.length - 1; // Final char of end-sequence?
@@ -168,9 +162,20 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
       fromState = toState;
     }
 
-    // Finish: any more characters -> error state.
+    // Finish: any more characters -> recover state.
     for (String letter in alphabet.letters) {
-      dfa.createTransition(fromState, errorState, letter);
+      // Add the invalid character at the end, then consecutively
+      // reduce the string's length from the front until the string
+      // is considered valid again.
+      FiniteAutomatonState latestValidState = startState;
+      var testString = input + letter;
+      for (int j = 0; j < input.length; j++) {
+        if (input.startsWith(testString.substring(j + 1))) {
+          latestValidState = states[input.length - j];
+          break;
+        }
+      }
+      dfa.createTransition(fromState, latestValidState, letter);
     }
 
     assert(dfa.isDeterministic());
