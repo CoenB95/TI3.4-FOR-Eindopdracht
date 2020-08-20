@@ -63,43 +63,46 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
     FiniteAutomatonState startState = dfa.createState('S', startState: true);
     FiniteAutomatonState fromState = startState;
-
-    // Construct the trap.
-    FiniteAutomatonState errorState = dfa.createState('X', endState: false);
-    for (String letter in alphabet.letters) {
-      dfa.createTransition(errorState, errorState, letter);
-    }
+    List<FiniteAutomatonState> states = [startState];
 
     for (int i = 0; i < input.length; i++) {
-      bool isFirstCharOfSequence = i == 0; // First char of end-sequence?
       bool isLastCharOfSequence =
           i == input.length - 1; // Final char of end-sequence?
 
       String char = input.characters.elementAt(i);
       FiniteAutomatonState toState =
           dfa.createState('Q${i + 1}', endState: isLastCharOfSequence);
+      states.add(toState);
 
       for (String letter in alphabet.letters) {
         if (letter == char) {
           dfa.createTransition(fromState, toState, letter);
-        } else if (isFirstCharOfSequence) {
-          dfa.createTransition(fromState, fromState, letter);
         } else {
-          dfa.createTransition(fromState, errorState, letter);
-        }
-      }
+          // Add the invalid character at the end, then consecutively
+          // reduce the string's length from the front until the string
+          // is considered valid again.
+          FiniteAutomatonState latestValidState = startState;
+          var testString = input.substring(0, i) + letter;
+          for (int j = 0; j < i; j++) {
+            if (input.startsWith(testString.substring(j + 1))) {
+              latestValidState = states[i - j];
+              break;
+            }
+          }
 
-      if (isLastCharOfSequence) {
-        for (String letter in alphabet.letters) {
-          dfa.createTransition(toState, toState, letter);
+          dfa.createTransition(fromState, latestValidState, letter);
         }
       }
 
       fromState = toState;
     }
 
-    assert(dfa.isDeterministic());
+    // Finish: any more characters -> same (success) state.
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(fromState, fromState, letter);
+    }
 
+    assert(dfa.isDeterministic());
     return dfa;
   }
 
@@ -162,14 +165,12 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
         }
       }
 
-      // Finish: any more characters -> error state.
-      if (isLastCharOfSequence) {
-        for (String letter in alphabet.letters) {
-          dfa.createTransition(toState, errorState, letter);
-        }
-      }
-
       fromState = toState;
+    }
+
+    // Finish: any more characters -> error state.
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(fromState, errorState, letter);
     }
 
     assert(dfa.isDeterministic());
@@ -247,13 +248,12 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
             fromState, (char == letter ? toState : errorState), letter);
       }
 
-      if (isLastCharOfSequence) {
-        for (String letter in alphabet.letters) {
-          dfa.createTransition(toState, toState, letter);
-        }
-      }
-
       fromState = toState;
+    }
+
+    // Finish: any more characters -> same (success) state.
+    for (String letter in alphabet.letters) {
+      dfa.createTransition(fromState, fromState, letter);
     }
 
     assert(dfa.isDeterministic());
