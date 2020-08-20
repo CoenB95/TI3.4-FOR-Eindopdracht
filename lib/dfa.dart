@@ -220,6 +220,38 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     return _match(_delta(state, symbol), string.substring(1));
   }
 
+  DeterministicFiniteAutomaton or(DeterministicFiniteAutomaton other) {
+    if (this.alphabet != other.alphabet)
+      throw ArgumentError("Can't combine DFA's: different Alphabet's");
+
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    var startTuple = TupleFiniteAutomatonState(
+        this, this.startState, other, other.startState,
+        startState: true,
+        endState: this.startState.isEndState || other.startState.isEndState);
+    dfa.addState(startTuple);
+    var traverseTuples = Queue.of([startTuple]);
+
+    while (traverseTuples.isNotEmpty) {
+      var tuple = traverseTuples.removeFirst();
+      print('CHECK ${tuple.name}');
+      for (var char in alphabet.letters) {
+        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
+        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
+        var newTuple = TupleFiniteAutomatonState(
+            tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
+            endState: nextStateA.isEndState || nextStateB.isEndState);
+        if (!dfa.states.contains(newTuple)) {
+          dfa.addState(newTuple);
+          traverseTuples.add(newTuple);
+        }
+        dfa.createTransition(tuple, newTuple, char);
+      }
+    }
+
+    return dfa;
+  }
+
   /// Constructs a new DFA that only accepts words that start with a specific
   /// sequence. Any deviation of the supplied sequence will result in the
   /// DFA denying the input word.
