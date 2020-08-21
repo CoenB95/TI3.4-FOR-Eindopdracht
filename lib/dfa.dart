@@ -36,7 +36,6 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
 
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
-      print('CHECK ${tuple.name}');
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
@@ -220,6 +219,14 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     return _match(_delta(state, symbol), string.substring(1));
   }
 
+  DeterministicFiniteAutomaton not() {
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    transitions.forEach((t) => dfa.addTransition(t));
+    states.forEach((s) => dfa.addState(FiniteAutomatonState(s.name,
+        isStartState: s.isStartState, isEndState: !s.isEndState)));
+    return dfa;
+  }
+
   DeterministicFiniteAutomaton or(DeterministicFiniteAutomaton other) {
     if (this.alphabet != other.alphabet)
       throw ArgumentError("Can't combine DFA's: different Alphabet's");
@@ -234,7 +241,6 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
 
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
-      print('CHECK ${tuple.name}');
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);

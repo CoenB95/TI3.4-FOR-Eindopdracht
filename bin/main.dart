@@ -19,6 +19,8 @@ main(List<String> arguments) {
   createGraph(dfa3, "HOI3");
   var dfa4 = DeterministicFiniteAutomaton.endWith("bbab").or(TestDFA.evenB());
   createGraph(dfa4, "HOI4");
+  var dfa5 = dfa4.not();
+  createGraph(dfa5, "HOI5");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);
