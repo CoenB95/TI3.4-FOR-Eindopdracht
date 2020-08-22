@@ -10,8 +10,45 @@ class FiniteAutomatonState {
       {this.isStartState = false, this.isEndState = false});
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FiniteAutomatonState &&
+          name == other.name &&
+          isEndState == other.isEndState &&
+          isStartState == other.isStartState;
+
+  @override
+  int get hashCode =>
+      name.hashCode ^ isEndState.hashCode ^ isStartState.hashCode;
+
+  @override
   String toString() =>
       'State (name=$name${isStartState ? ', isStart' : ''}${isEndState ? ', isEnd' : ''})';
+}
+
+class FiniteAutomatonStateTuple extends FiniteAutomatonState {
+  final Iterable<FiniteAutomatonState> states;
+
+  FiniteAutomatonStateTuple(this.states,
+      {bool isStartState = false, bool isEndState = false})
+      : super(states.map((s) => s.name).join(','),
+            isStartState: isStartState, isEndState: isEndState);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FiniteAutomatonStateTuple &&
+          name == other.name &&
+          isEndState == other.isEndState &&
+          isStartState == other.isStartState &&
+          states.every((s) => other.states.contains(s));
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      isEndState.hashCode ^
+      isStartState.hashCode ^
+      states.fold(0, (previousValue, s) => previousValue ^ s.hashCode);
 }
 
 abstract class FiniteAutomatonTransition {

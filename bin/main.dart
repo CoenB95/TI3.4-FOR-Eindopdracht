@@ -21,8 +21,14 @@ main(List<String> arguments) {
   createGraph(dfa4, "HOI4");
   var dfa5 = dfa4.not();
   createGraph(dfa5, "HOI5");
-  var dfa6 = DeterministicFiniteAutomaton.startWith("abcd").reversed();
+  var dfa6 = DeterministicFiniteAutomaton.startWith("abcd");
   createGraph(dfa6, "HOI6");
+  var ndfa7 = dfa6.reversed();
+  createGraph(ndfa7, "HOI7");
+  var dfa8 = ndfa7.toDFA();
+  createGraph(dfa8, "HOI8");
+  var dfa9 = DeterministicFiniteAutomaton.endWith("dcba");
+  createGraph(dfa9, "HOI9");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);
