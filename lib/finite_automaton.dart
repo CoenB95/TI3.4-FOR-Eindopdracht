@@ -79,8 +79,13 @@ class SymbolTransition extends FiniteAutomatonTransition {
       symbol == other.symbol;
 
   @override
-  FiniteAutomatonTransition reversed() =>
-      SymbolTransition(toState, fromState, symbol);
+  FiniteAutomatonTransition reversed() => SymbolTransition(
+      FiniteAutomatonState(toState.name,
+          isStartState: toState.isEndState, isEndState: toState.isStartState),
+      FiniteAutomatonState(fromState.name,
+          isStartState: fromState.isEndState,
+          isEndState: fromState.isStartState),
+      symbol);
 
   @override
   bool test([String symbol]) => this.symbol == symbol;
@@ -110,7 +115,12 @@ class EpsilonTransition extends FiniteAutomatonTransition {
       other is EpsilonTransition && fromState == other.fromState;
 
   @override
-  FiniteAutomatonTransition reversed() => EpsilonTransition(toState, fromState);
+  FiniteAutomatonTransition reversed() => EpsilonTransition(
+      FiniteAutomatonState(toState.name,
+          isStartState: toState.isEndState, isEndState: toState.isStartState),
+      FiniteAutomatonState(fromState.name,
+          isStartState: fromState.isEndState,
+          isEndState: fromState.isStartState));
 
   @override
   bool test([String symbol]) => true;
@@ -131,12 +141,10 @@ class EpsilonTransition extends FiniteAutomatonTransition {
 
 abstract class FiniteAutomaton implements FormalLanguage {
   final Set<FiniteAutomatonState> _states = {};
-  final Set<FiniteAutomatonTransition> _transitions = {};
   final Alphabet alphabet;
 
   Iterable<FiniteAutomatonState> get states => List.unmodifiable(_states);
-  Iterable<FiniteAutomatonTransition> get transitions =>
-      List.unmodifiable(_transitions);
+  Iterable<FiniteAutomatonTransition> get transitions;
 
   FiniteAutomaton(this.alphabet);
 
@@ -144,9 +152,7 @@ abstract class FiniteAutomaton implements FormalLanguage {
     _states.add(state);
   }
 
-  void addTransition(FiniteAutomatonTransition transition) {
-    _transitions.add(transition);
-  }
+  void addTransition(FiniteAutomatonTransition transition);
 
   FiniteAutomatonTransition createTransition(
       FiniteAutomatonState fromState, FiniteAutomatonState toState,
@@ -157,7 +163,7 @@ abstract class FiniteAutomaton implements FormalLanguage {
     else
       transition = SymbolTransition(fromState, toState, symbol);
 
-    if (_transitions.contains(transition))
+    if (transitions.contains(transition))
       throw UnsupportedError("Cannot add the same transition twice.");
 
     addTransition(transition);
@@ -182,7 +188,7 @@ abstract class FiniteAutomaton implements FormalLanguage {
     // for every letter from the alphabet.
     for (var s in _states) {
       for (var c in alphabet.letters) {
-        if (_transitions.where((t) => t.fromState == s && t.test(c)).length !=
+        if (transitions.where((t) => t.fromState == s && t.test(c)).length !=
             1) {
           return false;
         }
@@ -208,7 +214,7 @@ abstract class FiniteAutomaton implements FormalLanguage {
     states.where((s) => s.isStartState).forEach((s) {
       buffer.writeln('NOTHING -> "${s.name}"');
     });
-    _transitions.forEach((t) {
+    transitions.forEach((t) {
       buffer.writeln(
           '"${t.fromState.name}" -> "${t.toState.name}" [label="${t.label}"]');
     });

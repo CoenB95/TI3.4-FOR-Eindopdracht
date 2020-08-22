@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:collection/collection.dart';
+
 import 'dfa.dart';
 import 'finite_automaton.dart';
 import 'ndfa.dart';
@@ -34,9 +36,12 @@ class FormalLanguageConversions {
 
   static DeterministicFiniteAutomaton convertNDFAToDFA(
       NonDeterministicFiniteAutomaton ndfa) {
+    var eq = const ListEquality().equals;
     var dfa = DeterministicFiniteAutomaton(ndfa.alphabet);
-    var startTuple = FiniteAutomatonStateTuple(ndfa.startStates,
-        isStartState: ndfa.startStates.every((s) => s.isStartState),
+    var startStates = ndfa.startStates.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    var startTuple = FiniteAutomatonStateTuple(startStates,
+        isStartState: true,
         isEndState: ndfa.startStates.any((s) => s.isEndState));
     dfa.addState(startTuple);
     var traverseTuples = Queue.of([startTuple]);
@@ -44,9 +49,12 @@ class FormalLanguageConversions {
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in ndfa.alphabet.letters) {
-        var nextStates = tuple.states.expand((s) => ndfa.deltaE(s, char));
+        var nextStates = tuple.states
+            .expand((s) => ndfa.deltaE(s, char))
+            .toList()
+              ..sort((a, b) => a.name.compareTo(b.name));
         var newTuple = FiniteAutomatonStateTuple(nextStates,
-            isStartState: nextStates.every((s) => s.isStartState),
+            isStartState: eq(startStates, nextStates),
             isEndState: nextStates.any((s) => s.isEndState));
         if (!dfa.states.contains(newTuple)) {
           dfa.addState(newTuple);

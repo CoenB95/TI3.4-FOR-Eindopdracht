@@ -8,6 +8,14 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
   Iterable<FiniteAutomatonState> get startStates =>
       states.where((s) => s.isStartState);
 
+  final Set<FiniteAutomatonTransition> _transitions = {};
+  Iterable<FiniteAutomatonTransition> get transitions =>
+      List.unmodifiable(_transitions);
+
+  void addTransition(FiniteAutomatonTransition transition) {
+    _transitions.add(transition);
+  }
+
   static NonDeterministicFiniteAutomaton contains(String input,
       {Alphabet alphabet}) {
     NonDeterministicFiniteAutomaton ndfa =

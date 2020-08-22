@@ -23,11 +23,13 @@ main(List<String> arguments) {
   createGraph(dfa5, "HOI5");
   var dfa6 = DeterministicFiniteAutomaton.startWith("abcd");
   createGraph(dfa6, "HOI6");
-  var ndfa7 = dfa6.reversed();
+  var ndfa7a = dfa6.not();
+  createGraph(ndfa7a, "HOI7a");
+  var ndfa7 = dfa6.not().reversed();
   createGraph(ndfa7, "HOI7");
   var dfa8 = ndfa7.toDFA();
   createGraph(dfa8, "HOI8");
-  var dfa9 = DeterministicFiniteAutomaton.endWith("dcba");
+  var dfa9 = DeterministicFiniteAutomaton.endWith("dcba").not();
   createGraph(dfa9, "HOI9");
   test1(maxSteps);
   test2(maxSteps);
