@@ -6,10 +6,12 @@ class FiniteAutomatonState {
   final bool isStartState;
   final String name;
 
-  FiniteAutomatonState(this.name, {this.isStartState = false, this.isEndState = false});
+  FiniteAutomatonState(this.name,
+      {this.isStartState = false, this.isEndState = false});
 
   @override
-  String toString() => 'State (name=$name${isStartState ? ', isStart' : ''}${isEndState ? ', isEnd' : ''})';
+  String toString() =>
+      'State (name=$name${isStartState ? ', isStart' : ''}${isEndState ? ', isEnd' : ''})';
 }
 
 abstract class FiniteAutomatonTransition {
@@ -21,6 +23,7 @@ abstract class FiniteAutomatonTransition {
 
   /// Check whether this transition has the same transition-condition as the other (semi-equal).
   bool equalsTransition(FiniteAutomatonTransition other);
+  FiniteAutomatonTransition reversed();
   bool test([String symbol]);
 }
 
@@ -28,7 +31,9 @@ class SymbolTransition extends FiniteAutomatonTransition {
   final String symbol;
   String get label => symbol;
 
-  SymbolTransition(FiniteAutomatonState oldState, FiniteAutomatonState nextState, this.symbol) : super(oldState, nextState);
+  SymbolTransition(FiniteAutomatonState oldState,
+      FiniteAutomatonState nextState, this.symbol)
+      : super(oldState, nextState);
 
   @override
   bool equalsTransition(FiniteAutomatonTransition other) =>
@@ -37,21 +42,22 @@ class SymbolTransition extends FiniteAutomatonTransition {
       symbol == other.symbol;
 
   @override
+  FiniteAutomatonTransition reversed() =>
+      SymbolTransition(toState, fromState, symbol);
+
+  @override
   bool test([String symbol]) => this.symbol == symbol;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SymbolTransition &&
-      fromState == other.fromState &&
-      toState == other.toState &&
-      symbol == other.symbol;
+          fromState == other.fromState &&
+          toState == other.toState &&
+          symbol == other.symbol;
 
   @override
-  int get hashCode =>
-      fromState.hashCode ^
-      toState.hashCode ^
-      symbol.hashCode;
+  int get hashCode => fromState.hashCode ^ toState.hashCode ^ symbol.hashCode;
 
   @override
   String toString() => '$fromState --$symbol--> $toState';
@@ -64,8 +70,10 @@ class EpsilonTransition extends FiniteAutomatonTransition {
 
   @override
   bool equalsTransition(FiniteAutomatonTransition other) =>
-      other is EpsilonTransition &&
-      fromState == other.fromState;
+      other is EpsilonTransition && fromState == other.fromState;
+
+  @override
+  FiniteAutomatonTransition reversed() => EpsilonTransition(toState, fromState);
 
   @override
   bool test([String symbol]) => true;
@@ -73,14 +81,12 @@ class EpsilonTransition extends FiniteAutomatonTransition {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is EpsilonTransition &&        
-      fromState == other.fromState &&
-      toState == other.toState;
+      other is EpsilonTransition &&
+          fromState == other.fromState &&
+          toState == other.toState;
 
   @override
-  int get hashCode =>
-      fromState.hashCode ^
-      toState.hashCode;
+  int get hashCode => fromState.hashCode ^ toState.hashCode;
 
   @override
   String toString() => '$fromState --?--> $toState';
@@ -92,8 +98,9 @@ abstract class FiniteAutomaton implements FormalLanguage {
   final Alphabet alphabet;
 
   Iterable<FiniteAutomatonState> get states => List.unmodifiable(_states);
-  Iterable<FiniteAutomatonTransition> get transitions => List.unmodifiable(_transitions);
-  
+  Iterable<FiniteAutomatonTransition> get transitions =>
+      List.unmodifiable(_transitions);
+
   FiniteAutomaton(this.alphabet);
 
   void addState(FiniteAutomatonState state) {
@@ -104,13 +111,15 @@ abstract class FiniteAutomaton implements FormalLanguage {
     _transitions.add(transition);
   }
 
-  FiniteAutomatonTransition createTransition(FiniteAutomatonState fromState, FiniteAutomatonState toState, [String symbol]) {
+  FiniteAutomatonTransition createTransition(
+      FiniteAutomatonState fromState, FiniteAutomatonState toState,
+      [String symbol]) {
     FiniteAutomatonTransition transition;
     if (symbol == null)
       transition = EpsilonTransition(fromState, toState);
     else
       transition = SymbolTransition(fromState, toState, symbol);
-    
+
     if (_transitions.contains(transition))
       throw UnsupportedError("Cannot add the same transition twice.");
 
@@ -118,8 +127,10 @@ abstract class FiniteAutomaton implements FormalLanguage {
     return transition;
   }
 
-  FiniteAutomatonState createState(String name, {bool startState = false, bool endState = false}) {
-    FiniteAutomatonState state = FiniteAutomatonState(name, isStartState: startState, isEndState: endState);
+  FiniteAutomatonState createState(String name,
+      {bool startState = false, bool endState = false}) {
+    FiniteAutomatonState state = FiniteAutomatonState(name,
+        isStartState: startState, isEndState: endState);
 
     if (_states.contains(state) || _states.any((s) => s.name == name))
       throw UnsupportedError("Cannot add the same state twice.");
@@ -134,7 +145,8 @@ abstract class FiniteAutomaton implements FormalLanguage {
     // for every letter from the alphabet.
     for (var s in _states) {
       for (var c in alphabet.letters) {
-        if (_transitions.where((t) => t.fromState == s && t.test(c)).length != 1) {
+        if (_transitions.where((t) => t.fromState == s && t.test(c)).length !=
+            1) {
           return false;
         }
       }
@@ -151,7 +163,8 @@ abstract class FiniteAutomaton implements FormalLanguage {
     _states.toSet().forEach((s) {
       buffer.write('"${s.name}" [label="${s.name}", shape=ellipse');
       if (s.isStartState) buffer.write(', color=cyan, style=filled');
-      if (s.isEndState) buffer.write(', peripheries=2, color=green, style=filled');
+      if (s.isEndState)
+        buffer.write(', peripheries=2, color=green, style=filled');
       buffer.writeln(']');
     });
     buffer.writeln();
@@ -159,7 +172,8 @@ abstract class FiniteAutomaton implements FormalLanguage {
       buffer.writeln('NOTHING -> "${s.name}"');
     });
     _transitions.forEach((t) {
-      buffer.writeln('"${t.fromState.name}" -> "${t.toState.name}" [label="${t.label}"]');
+      buffer.writeln(
+          '"${t.fromState.name}" -> "${t.toState.name}" [label="${t.label}"]');
     });
     buffer.writeln('}');
     return buffer.toString();

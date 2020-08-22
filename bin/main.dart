@@ -4,7 +4,7 @@ import 'package:TI3/dfa.dart';
 import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/formal_language.dart';
 import 'package:TI3/testcases.dart';
-import 'package:TI3/thompson.dart';
+import 'package:TI3/conversions.dart';
 
 bool breakOnAssertFailure = true;
 
@@ -21,6 +21,8 @@ main(List<String> arguments) {
   createGraph(dfa4, "HOI4");
   var dfa5 = dfa4.not();
   createGraph(dfa5, "HOI5");
+  var dfa6 = DeterministicFiniteAutomaton.startWith("abcd").reversed();
+  createGraph(dfa6, "HOI6");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);
@@ -74,7 +76,7 @@ void test5(int maxSteps) {
   printLanguage(regex, maxSteps);
 
   print("Test 5b: The NDFA converted from said regex");
-  var ndfa = Thompson.convertRegexToNDFA(regex);
+  var ndfa = regex.toNDFA();
   printAutomatonDetails(ndfa);
   assertEqualEachOther(regex, ndfa, maxSteps);
   createGraph(ndfa, "Test 5 (Thompson)");
@@ -88,7 +90,7 @@ void test6(int maxSteps) {
   printLanguage(regex, maxSteps);
 
   print("Test 6b: The NDFA converted from said regex");
-  var ndfa = Thompson.convertRegexToNDFA(regex);
+  var ndfa = regex.toNDFA();
   printAutomatonDetails(ndfa);
   assertEqualEachOther(regex, ndfa, maxSteps);
   createGraph(ndfa, "Test 6 (Thompson)");
