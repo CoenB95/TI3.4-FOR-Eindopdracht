@@ -35,6 +35,10 @@ main(List<String> arguments) {
   createGraph(ndfa10, "HOI10");
   var dfa11 = ndfa10.toDFA();
   createGraph(dfa11, "HOI11");
+  var ndfa12 = TestRegex.containsAB().toNDFA();
+  createGraph(ndfa12, "HOI12");
+  var dfa13 = ndfa12.toDFA();
+  createGraph(dfa13, "HOI13");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);
