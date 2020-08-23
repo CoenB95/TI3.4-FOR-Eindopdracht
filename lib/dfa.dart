@@ -11,15 +11,23 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
   FiniteAutomatonState get startState =>
       states.where((s) => s.isStartState).first;
 
+  final Set<SymbolTransition> _transitions = {};
+  @override
+  Iterable<SymbolTransition> get transitions => List.unmodifiable(_transitions);
+
   /// Add a new state-transition to this DFA.
   /// Note that a DFA is extra picky about its uniqueness.
   @override
   void addTransition(FiniteAutomatonTransition transition) {
+    if (!(transition is SymbolTransition))
+      throw UnsupportedError(
+          "Cannot add transition '$transition'; DFA does not support epsilon.");
+
     if (transitions.any((t) => t.equalsTransition(transition)))
       throw UnsupportedError(
           "Cannot add transition '$transition' to DFA, similar transition already defined for state.");
 
-    super.addTransition(transition);
+    _transitions.add(transition);
   }
 
   DeterministicFiniteAutomaton and(DeterministicFiniteAutomaton other) {
@@ -27,7 +35,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
       throw ArgumentError("Can't combine DFA's: different Alphabet's");
 
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    var startTuple = TupleFiniteAutomatonState(
+    var startTuple = _MergedFiniteAutomatonState(
         this, this.startState, other, other.startState,
         startState: true,
         endState: this.startState.isEndState && other.startState.isEndState);
@@ -39,7 +47,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
-        var newTuple = TupleFiniteAutomatonState(
+        var newTuple = _MergedFiniteAutomatonState(
             tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
             endState: nextStateA.isEndState && nextStateB.isEndState);
         if (!dfa.states.contains(newTuple)) {
@@ -221,7 +229,14 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
 
   DeterministicFiniteAutomaton not() {
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    transitions.forEach((t) => dfa.addTransition(t));
+    transitions.forEach((t) => dfa.addTransition(SymbolTransition(
+        FiniteAutomatonState(t.fromState.name,
+            isStartState: t.fromState.isStartState,
+            isEndState: !t.fromState.isEndState),
+        FiniteAutomatonState(t.toState.name,
+            isStartState: t.toState.isStartState,
+            isEndState: !t.toState.isEndState),
+        t.symbol)));
     states.forEach((s) => dfa.addState(FiniteAutomatonState(s.name,
         isStartState: s.isStartState, isEndState: !s.isEndState)));
     return dfa;
@@ -232,7 +247,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
       throw ArgumentError("Can't combine DFA's: different Alphabet's");
 
     DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
-    var startTuple = TupleFiniteAutomatonState(
+    var startTuple = _MergedFiniteAutomatonState(
         this, this.startState, other, other.startState,
         startState: true,
         endState: this.startState.isEndState || other.startState.isEndState);
@@ -244,7 +259,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
       for (var char in alphabet.letters) {
         var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
-        var newTuple = TupleFiniteAutomatonState(
+        var newTuple = _MergedFiniteAutomatonState(
             tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
             endState: nextStateA.isEndState || nextStateB.isEndState);
         if (!dfa.states.contains(newTuple)) {
@@ -304,13 +319,13 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
   }
 }
 
-class TupleFiniteAutomatonState extends FiniteAutomatonState {
+class _MergedFiniteAutomatonState extends FiniteAutomatonState {
   final DeterministicFiniteAutomaton automatonA;
   final DeterministicFiniteAutomaton automatonB;
   final FiniteAutomatonState stateA;
   final FiniteAutomatonState stateB;
 
-  TupleFiniteAutomatonState(
+  _MergedFiniteAutomatonState(
       this.automatonA, this.stateA, this.automatonB, this.stateB,
       {bool startState = false, bool endState = false})
       : super(stateA.name + ', ' + stateB.name,
@@ -319,7 +334,7 @@ class TupleFiniteAutomatonState extends FiniteAutomatonState {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TupleFiniteAutomatonState &&
+      other is _MergedFiniteAutomatonState &&
           automatonA == other.automatonA &&
           automatonB == other.automatonB &&
           stateA == other.stateA &&

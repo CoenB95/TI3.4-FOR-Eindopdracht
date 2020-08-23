@@ -1,3 +1,7 @@
+import 'dart:collection';
+
+import 'package:collection/collection.dart';
+
 import 'dfa.dart';
 import 'finite_automaton.dart';
 import 'ndfa.dart';
@@ -7,6 +11,12 @@ extension DeterministicFiniteAutomatonConversions
     on DeterministicFiniteAutomaton {
   NonDeterministicFiniteAutomaton reversed() =>
       FormalLanguageConversions.convertDFAToReversedNDFA(this);
+}
+
+extension NonDeterministicFiniteAutomatonConversions
+    on NonDeterministicFiniteAutomaton {
+  DeterministicFiniteAutomaton toDFA() =>
+      FormalLanguageConversions.convertNDFAToDFA(this);
 }
 
 extension RegexConversions on RegularExpression {
@@ -22,6 +32,36 @@ class FormalLanguageConversions {
     dfa.states.forEach((s) => ndfa.addState(FiniteAutomatonState(s.name,
         isStartState: s.isEndState, isEndState: s.isStartState)));
     return ndfa;
+  }
+
+  static DeterministicFiniteAutomaton convertNDFAToDFA(
+      NonDeterministicFiniteAutomaton ndfa) {
+    var eq = const ListEquality().equals;
+    var dfa = DeterministicFiniteAutomaton(ndfa.alphabet);
+    var startStates = ndfa.eClosure(ndfa.startStates).toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    var startTuple = FiniteAutomatonStateTuple(startStates,
+        isStartState: true,
+        isEndState: ndfa.startStates.any((s) => s.isEndState));
+    dfa.addState(startTuple);
+    var traverseTuples = Queue.of([startTuple]);
+
+    while (traverseTuples.isNotEmpty) {
+      var tuple = traverseTuples.removeFirst();
+      for (var char in ndfa.alphabet.letters) {
+        var nextStates = ndfa.deltaE(tuple.states, char).toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+        var newTuple = FiniteAutomatonStateTuple(nextStates,
+            isStartState: eq(startStates, nextStates),
+            isEndState: nextStates.any((s) => s.isEndState));
+        if (!dfa.states.contains(newTuple)) {
+          dfa.addState(newTuple);
+          traverseTuples.add(newTuple);
+        }
+        dfa.createTransition(tuple, newTuple, char);
+      }
+    }
+    return dfa;
   }
 
   static NonDeterministicFiniteAutomaton convertRegexToNDFA(
