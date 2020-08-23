@@ -38,7 +38,7 @@ class FormalLanguageConversions {
       NonDeterministicFiniteAutomaton ndfa) {
     var eq = const ListEquality().equals;
     var dfa = DeterministicFiniteAutomaton(ndfa.alphabet);
-    var startStates = ndfa.startStates.toList()
+    var startStates = ndfa.eClosure(ndfa.startStates).toList()
       ..sort((a, b) => a.name.compareTo(b.name));
     var startTuple = FiniteAutomatonStateTuple(startStates,
         isStartState: true,
