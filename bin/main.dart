@@ -31,6 +31,10 @@ main(List<String> arguments) {
   createGraph(dfa8, "HOI8");
   var dfa9 = DeterministicFiniteAutomaton.endWith("dcba").not();
   createGraph(dfa9, "HOI9");
+  var ndfa10 = TestNDFA.containsAB();
+  createGraph(ndfa10, "HOI10");
+  var dfa11 = ndfa10.toDFA();
+  createGraph(dfa11, "HOI11");
   test1(maxSteps);
   test2(maxSteps);
   test3(maxSteps);

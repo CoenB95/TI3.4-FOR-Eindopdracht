@@ -33,27 +33,30 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
     return ndfa;
   }
 
-  /// List all the states that can be reached from this state using the supplied symbol.
-  /// Considers epsilon-transitions as well.
-  Set<FiniteAutomatonState> deltaE(FiniteAutomatonState state, String symbol) {
-    Set<FiniteAutomatonState> epsilonStates = eClosure(state);
+  /// List all the states that can be reached from these state(s) using the
+  /// supplied symbol. Considers epsilon-transitions as well.
+  Set<FiniteAutomatonState> deltaE(
+      Iterable<FiniteAutomatonState> states, String symbol) {
+    Set<FiniteAutomatonState> epsilonStates = eClosure(states);
     var y = transitions
         .where((t) => epsilonStates.contains(t.fromState) && t.test(symbol))
         .map((t) => t.toState)
         .toSet();
+    if (y.isEmpty) return Set.of(states);
     return y;
   }
 
-  /// List all the states that can be reached from this state without consuming a character (epsilon-only).
-  Set<FiniteAutomatonState> eClosure(FiniteAutomatonState state) {
-    Set<FiniteAutomatonState> epsilonStates = {
-      state
-    }; // Of course we can reach ourselves.
+  /// List all the states that can be reached from these state(s) without
+  /// consuming a character (epsilon-only).
+  Set<FiniteAutomatonState> eClosure(Iterable<FiniteAutomatonState> states) {
+    // Of course we can reach ourselves.
+    Set<FiniteAutomatonState> epsilonStates = Set.of(states);
 
     // Recursively check whether there are more 'free' transitions.
     var epsilonTransitions =
-        transitions.where((t) => t.fromState == state && t.test());
-    epsilonStates.addAll(epsilonTransitions.expand((t) => eClosure(t.toState)));
+        transitions.where((t) => states.contains(t.fromState) && t.test());
+    epsilonStates
+        .addAll(epsilonTransitions.expand((t) => eClosure([t.toState])));
 
     return epsilonStates;
   }
@@ -108,11 +111,11 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
     while (i < string.length) {
       String symbol = string.characters.elementAt(i);
       String subString = string.substring(i + 1);
-      if (deltaE(state, symbol).any((s) => _match(s, subString))) return true;
+      if (deltaE([state], symbol).any((s) => _match(s, subString))) return true;
       i++;
     }
 
-    return eClosure(state).any((s) => s.isEndState);
+    return eClosure([state]).any((s) => s.isEndState);
   }
 
   static NonDeterministicFiniteAutomaton startWith(String input,

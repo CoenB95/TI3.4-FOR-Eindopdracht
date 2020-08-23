@@ -49,10 +49,8 @@ class FormalLanguageConversions {
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in ndfa.alphabet.letters) {
-        var nextStates = tuple.states
-            .expand((s) => ndfa.deltaE(s, char))
-            .toList()
-              ..sort((a, b) => a.name.compareTo(b.name));
+        var nextStates = ndfa.deltaE(tuple.states, char).toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
         var newTuple = FiniteAutomatonStateTuple(nextStates,
             isStartState: eq(startStates, nextStates),
             isEndState: nextStates.any((s) => s.isEndState));
