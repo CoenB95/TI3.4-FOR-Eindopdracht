@@ -123,7 +123,7 @@ class EpsilonTransition extends FiniteAutomatonTransition {
           isEndState: fromState.isStartState));
 
   @override
-  bool test([String symbol]) => true;
+  bool test([String symbol]) => symbol?.isEmpty ?? true;
 
   @override
   bool operator ==(Object other) =>
