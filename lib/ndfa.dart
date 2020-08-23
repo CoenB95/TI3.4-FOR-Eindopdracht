@@ -40,7 +40,7 @@ class NonDeterministicFiniteAutomaton extends FiniteAutomaton {
     Set<FiniteAutomatonState> epsilonStates = eClosure(states);
     var y = transitions
         .where((t) => epsilonStates.contains(t.fromState) && t.test(symbol))
-        .map((t) => t.toState)
+        .expand((t) => eClosure([t.toState]))
         .toSet();
     if (y.isEmpty) return Set.of(states);
     return y;
