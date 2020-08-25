@@ -74,6 +74,10 @@ class FormalLanguageConversions {
     return ndfa;
   }
 
+  static RegularExpression convertStringToRegex(String regexString) {
+    RegularExpression regex = RegularExpression.one('a');
+  }
+
   static int _thompsonConstruction(
       NonDeterministicFiniteAutomaton ndfa,
       FiniteAutomatonState left,
