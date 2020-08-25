@@ -112,7 +112,13 @@ class TestCLI {
       options.add(
           _CliOption('[DFA] Invert', () => selectActivity(language.not())));
       options.add(_CliOption(
+          '[DFA] Minimize (reverse, DFA, reverse, DFA)',
+          () =>
+              selectActivity(language.reversed().toDFA().reversed().toDFA())));
+      options.add(_CliOption(
           '[DFA] Reverse -> NDFA', () => selectActivity(language.reversed())));
+      options.add(_CliOption(
+          '[DFA] Clean up labels', () => selectActivity(language.clean())));
     }
     if (language is NonDeterministicFiniteAutomaton) {
       options.add(_CliOption(

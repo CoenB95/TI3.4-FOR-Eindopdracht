@@ -61,6 +61,20 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     return dfa;
   }
 
+  DeterministicFiniteAutomaton clean() {
+    DeterministicFiniteAutomaton dfa = DeterministicFiniteAutomaton(alphabet);
+    Map<FiniteAutomatonState, FiniteAutomatonState> mapping = {};
+    for (int i = 0; i < states.length; i++) {
+      var oldState = states.toList()[i];
+      mapping[oldState] = FiniteAutomatonState('Q$i',
+          isStartState: oldState.isStartState, isEndState: oldState.isEndState);
+    }
+    states.forEach((s) => dfa.addState(mapping[s]));
+    transitions.forEach((t) => dfa.addTransition(
+        SymbolTransition(mapping[t.fromState], mapping[t.toState], t.symbol)));
+    return dfa;
+  }
+
   /// Constructs a new DFA that only accepts words that contains a specific
   /// sequence. Any deviation of the supplied sequence will result in the
   /// DFA denying the input word.
