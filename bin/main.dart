@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:TI3/dfa.dart';
 import 'package:TI3/finite_automaton.dart';
 import 'package:TI3/formal_language.dart';
+import 'package:TI3/test-cli.dart';
 import 'package:TI3/testcases.dart';
 import 'package:TI3/conversions.dart';
 
@@ -46,6 +47,9 @@ main(List<String> arguments) {
   test5(maxSteps);
   test6(maxSteps);
   test7(maxSteps);
+
+  var testProgram = TestCLI();
+  testProgram.run();
 }
 
 void test1(int maxSteps) {
