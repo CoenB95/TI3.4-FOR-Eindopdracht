@@ -261,6 +261,8 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
         var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
         var newTuple = _MergedFiniteAutomatonState(
             tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
+            startState: nextStateA == startTuple.stateA &&
+                nextStateB == startTuple.stateB,
             endState: nextStateA.isEndState || nextStateB.isEndState);
         if (!dfa.states.contains(newTuple)) {
           dfa.addState(newTuple);
