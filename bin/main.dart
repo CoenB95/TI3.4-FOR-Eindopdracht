@@ -9,9 +9,9 @@ import 'package:TI3/conversions.dart';
 
 bool breakOnAssertFailure = true;
 
-main(List<String> arguments) {
+main(List<String> arguments) async {
   int maxSteps = 5;
-  print('Hello world!');
+  /*print('Hello world!');
   var dfa1 = DeterministicFiniteAutomaton.startWith("bbabbabba");
   createGraph(dfa1, "HOI1");
   var dfa2 = DeterministicFiniteAutomaton.endWith("bbabbabba");
@@ -46,10 +46,10 @@ main(List<String> arguments) {
   test4(maxSteps);
   test5(maxSteps);
   test6(maxSteps);
-  test7(maxSteps);
+  test7(maxSteps);*/
 
   var testProgram = TestCLI();
-  testProgram.run();
+  await testProgram.run();
 }
 
 void test1(int maxSteps) {
