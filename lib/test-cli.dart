@@ -125,6 +125,8 @@ class TestCLI {
           '[NDFA] Convert To DFA', () => selectActivity(language.toDFA())));
     }
     if (language is RegularExpression) {
+      options.add(
+          _CliOption('[REGEX] Generate Language', () => generate(language)));
       options.add(_CliOption(
           '[REGEX] Convert To NDFA', () => selectActivity(language.toNDFA())));
     }
