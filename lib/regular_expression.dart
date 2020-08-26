@@ -22,21 +22,25 @@ class RegularExpression implements FormalLanguage {
     }
   };
 
-  RegularExpression._impl(this.operation, {this.terminal = '', this.left, this.right});
+  RegularExpression._impl(this.operation,
+      {this.terminal = '', this.left, this.right});
 
   factory RegularExpression.one(String terminal) {
-    if (terminal.length != 1)
-      throw StateError('Terminal must be 1 character.');
+    if (terminal.length != 1) throw StateError('Terminal must be 1 character.');
     return RegularExpression._impl(Operator.ONE, terminal: terminal);
   }
 
-  RegularExpression plus() => RegularExpression._impl(Operator.PLUS, left: this);
+  RegularExpression plus() =>
+      RegularExpression._impl(Operator.PLUS, left: this);
 
-  RegularExpression star() => RegularExpression._impl(Operator.STAR, left: this);
+  RegularExpression star() =>
+      RegularExpression._impl(Operator.STAR, left: this);
 
-  RegularExpression or(RegularExpression e2) => RegularExpression._impl(Operator.OR, left: this, right: e2);
+  RegularExpression or(RegularExpression e2) =>
+      RegularExpression._impl(Operator.OR, left: this, right: e2);
 
-  RegularExpression dot(RegularExpression e2) => RegularExpression._impl(Operator.DOT, left: this, right: e2);
+  RegularExpression dot(RegularExpression e2) =>
+      RegularExpression._impl(Operator.DOT, left: this, right: e2);
 
   Set<String> _computeAlphabet() {
     Set<String> result = {};
@@ -53,7 +57,8 @@ class RegularExpression implements FormalLanguage {
         result.addAll(right == null ? {} : right._computeAlphabet());
         break;
       default:
-        throw StateError("Error generating language from regex: unknown operator '$operation'");
+        throw StateError(
+            "Error generating language from regex: unknown operator '$operation'");
         break;
     }
     return result;
@@ -73,14 +78,18 @@ class RegularExpression implements FormalLanguage {
         languageResult.add(terminal);
         break;
       case Operator.OR:
-        languageLeft = left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
-        languageRight = right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
+        languageLeft =
+            left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
+        languageRight =
+            right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
         languageResult.addAll(languageLeft);
         languageResult.addAll(languageRight);
         break;
       case Operator.DOT:
-        languageLeft = left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
-        languageRight = right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
+        languageLeft =
+            left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
+        languageRight =
+            right == null ? emptyLanguage : right.generate(maxSteps: maxSteps);
         for (String s1 in languageLeft)
           for (String s2 in languageRight) {
             languageResult.add(s1 + s2);
@@ -89,7 +98,7 @@ class RegularExpression implements FormalLanguage {
       case Operator.STAR:
       case Operator.PLUS:
         languageLeft =
-        left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
+            left == null ? emptyLanguage : left.generate(maxSteps: maxSteps);
         languageResult.addAll(languageLeft);
         for (int i = 1; i < maxSteps; i++) {
           HashSet<String> languageTemp = HashSet.from(languageResult);
@@ -104,7 +113,8 @@ class RegularExpression implements FormalLanguage {
         }
         break;
       default:
-        throw StateError("Error generating language from regex: unknown operator '$operation'");
+        throw StateError(
+            "Error generating language from regex: unknown operator '$operation'");
         break;
     }
     return languageResult;
@@ -113,5 +123,23 @@ class RegularExpression implements FormalLanguage {
   @override
   bool hasMatch(String input) {
     throw UnimplementedError();
+  }
+
+  @override
+  String toString() {
+    switch (operation) {
+      case Operator.PLUS:
+        return 'ONE OR MORE TIMES ${left.toString()}';
+      case Operator.STAR:
+        return 'ZERO OR MORE TIMES ${left.toString()}';
+      case Operator.OR:
+        return '(${left.toString()}) OR (${right.toString()})';
+      case Operator.DOT:
+        return '${left.toString()} THEN ${right.toString()}';
+      case Operator.ONE:
+        return terminal;
+      default:
+        return '?';
+    }
   }
 }

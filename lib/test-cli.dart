@@ -43,6 +43,32 @@ class TestCLI {
     print("Graph exported as ${graphName}.png");
   }
 
+  Future<RegularExpression> inputRegex() async {
+    RegularExpression regex;
+    do {
+      print('Type a regex:');
+      String str = await _inputString();
+      try {
+        regex = str.toRegex();
+      } catch (e) {
+        print('Failed to parse regex: $e');
+        print('Please try again');
+      }
+    } while (regex == null);
+    return regex;
+  }
+
+  Future<String> _inputString() async {
+    return Future(() {
+      stdin.lineMode = true;
+      stdin.echoMode = true;
+      String result = stdin.readLineSync(encoding: encoding);
+      stdin.echoMode = false;
+      stdin.lineMode = false;
+      return result;
+    });
+  }
+
   Future<_CliOption> _optionMenu(
       String headline, List<_CliOption> options) async {
     return Future(() {
@@ -170,6 +196,8 @@ class TestCLI {
             () => selectActivity(TestNDFA.containsAB())),
         _CliOption("[REGEX] Contains 'ab'",
             () => selectActivity(TestRegex.containsAB())),
+        _CliOption("[REGEX] Build your own!",
+            () async => selectActivity(await inputRegex())),
         _CliOption('<= Back', null),
       ]);
       await o.onSelect?.call();
