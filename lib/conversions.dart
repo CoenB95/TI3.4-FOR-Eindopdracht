@@ -24,6 +24,11 @@ extension RegexConversions on RegularExpression {
       FormalLanguageConversions.convertRegexToNDFA(this);
 }
 
+extension StringConversions on String {
+  RegularExpression toRegex() =>
+      FormalLanguageConversions.convertStringToRegex(this);
+}
+
 class FormalLanguageConversions {
   static NonDeterministicFiniteAutomaton convertDFAToReversedNDFA(
       DeterministicFiniteAutomaton dfa) {
@@ -74,8 +79,100 @@ class FormalLanguageConversions {
     return ndfa;
   }
 
-  static RegularExpression convertStringToRegex(String regexString) {
-    RegularExpression regex = RegularExpression.one('a');
+  static RegularExpression convertStringToRegex(String regexString,
+      [int startIndex = 0]) {
+    RegularExpression regex;
+    RegularExpression previousGroup;
+
+    for (int i = startIndex; i < regexString.length; i++) {
+      var char = regexString[i];
+      switch (char) {
+        case '(':
+          int start = i + 1;
+          int end = regexString.indexOf(')', i);
+          if (end < 0) {
+            throw StateError("Missing closing bracket to match"
+                " opening bracket at position $i.");
+          }
+
+          if (regex == null) {
+            regex = previousGroup;
+          } else if (previousGroup != null) {
+            regex = regex.dot(previousGroup);
+          }
+
+          previousGroup = convertStringToRegex(regexString, start);
+          i = end;
+          break;
+        case ')':
+          if (regex == null) {
+            regex = previousGroup;
+          } else if (previousGroup != null) {
+            regex = regex.dot(previousGroup);
+          }
+          return regex;
+        case '|':
+          int start = i + 1;
+          int end = regexString.indexOf(')', i);
+
+          if (regex == null) {
+            if (previousGroup == null)
+              throw StateError('Missing left side of OR');
+            regex = previousGroup;
+          } else if (previousGroup != null) {
+            regex = regex.dot(previousGroup);
+          }
+
+          regex = regex.or(convertStringToRegex(regexString, start));
+          previousGroup = null;
+          if (end >= 0) {
+            return regex;
+          } else {
+            i = regexString.length;
+          }
+          break;
+        case '+':
+          if (previousGroup == null)
+            throw StateError('Missing character or group to apply PLUS on'
+                ' at position $i');
+          if (regex == null) {
+            regex = previousGroup.plus();
+          } else {
+            regex = regex.dot(previousGroup.plus());
+          }
+          previousGroup = null;
+          break;
+        case '*':
+          if (previousGroup == null)
+            throw StateError('Missing character or group to apply STAR on'
+                ' at position $i');
+          if (regex == null) {
+            regex = previousGroup.star();
+          } else {
+            regex = regex.dot(previousGroup.star());
+          }
+          previousGroup = null;
+          break;
+        default:
+          if (regex == null) {
+            regex = previousGroup;
+            previousGroup = RegularExpression.one(char);
+          } else if (previousGroup != null) {
+            regex = regex.dot(previousGroup);
+            previousGroup = RegularExpression.one(char);
+          } else {
+            previousGroup = RegularExpression.one(char);
+          }
+          break;
+      }
+    }
+
+    if (regex == null) {
+      regex = previousGroup;
+    } else if (previousGroup != null) {
+      regex = regex.dot(previousGroup);
+    }
+    return regex;
   }
 
   static int _thompsonConstruction(
