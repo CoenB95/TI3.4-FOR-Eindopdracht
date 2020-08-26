@@ -44,8 +44,12 @@ class TestNDFA {
     var q1 = ndfa.createState('q1');
     var q2 = ndfa.createState('q2', endState: true);
 
+    ndfa.createTransition(q0, q0, 'a');
+    ndfa.createTransition(q0, q0, 'b');
     ndfa.createTransition(q0, q1, 'a');
     ndfa.createTransition(q1, q2, 'b');
+    ndfa.createTransition(q2, q2, 'a');
+    ndfa.createTransition(q2, q2, 'b');
 
     return ndfa;
   }
@@ -54,23 +58,27 @@ class TestNDFA {
 class TestRegex {
   /// Regex: (a|b)*ab(a|b)*
   static RegularExpression containsAB() {
-    return RegularExpression.one('a').or(RegularExpression.one('b')).star().dot(
-      RegularExpression.one('a').dot(RegularExpression.one('b'))).dot(
-      RegularExpression.one('a').or(RegularExpression.one('b')).star());
+    return RegularExpression.one('a')
+        .or(RegularExpression.one('b'))
+        .star()
+        .dot(RegularExpression.one('a').dot(RegularExpression.one('b')))
+        .dot(RegularExpression.one('a').or(RegularExpression.one('b')).star());
   }
 
   /// Regex: (a|bc)*
   static RegularExpression regex2() {
-    return RegularExpression.one('a').or(
-      RegularExpression.one('b').dot(RegularExpression.one('c')))
-      .star();
+    return RegularExpression.one('a')
+        .or(RegularExpression.one('b').dot(RegularExpression.one('c')))
+        .star();
   }
 
   /// Regex: ((ba*b)|(bb)+|(aa)+)+
   static RegularExpression regex3() {
-    return RegularExpression.one('b').dot(RegularExpression.one('a').star()).dot(RegularExpression.one('b'))
-      .or(RegularExpression.one('b').dot(RegularExpression.one('b')).plus())
-      .or(RegularExpression.one('a').dot(RegularExpression.one('a')).plus())
-      .plus();
+    return RegularExpression.one('b')
+        .dot(RegularExpression.one('a').star())
+        .dot(RegularExpression.one('b'))
+        .or(RegularExpression.one('b').dot(RegularExpression.one('b')).plus())
+        .or(RegularExpression.one('a').dot(RegularExpression.one('a')).plus())
+        .plus();
   }
 }
