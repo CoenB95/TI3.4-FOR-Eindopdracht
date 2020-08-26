@@ -45,8 +45,8 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in alphabet.letters) {
-        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
-        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
+        var nextStateA = tuple.automatonA.delta(tuple.stateA, char);
+        var nextStateB = tuple.automatonB.delta(tuple.stateB, char);
         var newTuple = _MergedFiniteAutomatonState(
             tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
             endState: nextStateA.isEndState && nextStateB.isEndState);
@@ -129,7 +129,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
 
   /// List all the states that can be reached from this state using the supplied symbol.
   /// Because
-  FiniteAutomatonState _delta(FiniteAutomatonState state, String symbol) {
+  FiniteAutomatonState delta(FiniteAutomatonState state, String symbol) {
     if (!alphabet.isValid(symbol))
       throw ArgumentError.value(symbol, 'symbol', 'Not part of alphabet');
     return transitions
@@ -214,7 +214,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     maxSteps--;
 
     for (var char in alphabet.letters) {
-      var nextState = _delta(state, char);
+      var nextState = delta(state, char);
       if (nextState.isEndState) {
         languageResult.add(char);
       }
@@ -238,7 +238,7 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     if (string.isEmpty) return state.isEndState;
 
     String symbol = string.characters.first;
-    return _match(_delta(state, symbol), string.substring(1));
+    return _match(delta(state, symbol), string.substring(1));
   }
 
   DeterministicFiniteAutomaton not() {
@@ -271,8 +271,8 @@ class DeterministicFiniteAutomaton extends FiniteAutomaton {
     while (traverseTuples.isNotEmpty) {
       var tuple = traverseTuples.removeFirst();
       for (var char in alphabet.letters) {
-        var nextStateA = tuple.automatonA._delta(tuple.stateA, char);
-        var nextStateB = tuple.automatonB._delta(tuple.stateB, char);
+        var nextStateA = tuple.automatonA.delta(tuple.stateA, char);
+        var nextStateB = tuple.automatonB.delta(tuple.stateB, char);
         var newTuple = _MergedFiniteAutomatonState(
             tuple.automatonA, nextStateA, tuple.automatonB, nextStateB,
             startState: nextStateA == startTuple.stateA &&

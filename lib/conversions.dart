@@ -36,6 +36,7 @@ class FormalLanguageConversions {
     dfa.transitions.forEach((t) => ndfa.addTransition(t.reversed()));
     dfa.states.forEach((s) => ndfa.addState(FiniteAutomatonState(s.name,
         isStartState: s.isEndState, isEndState: s.isStartState)));
+    ndfa = removeUnreachableStates(ndfa);
     return ndfa;
   }
 
@@ -173,6 +174,23 @@ class FormalLanguageConversions {
       regex = regex.dot(previousGroup);
     }
     return regex;
+  }
+
+  static NonDeterministicFiniteAutomaton removeUnreachableStates(
+      NonDeterministicFiniteAutomaton ndfa) {
+    var un = ndfa.states.where((s) => !ndfa.isStateReachable(s)).toList();
+    var ndfa2 = NonDeterministicFiniteAutomaton(ndfa.alphabet);
+    ndfa.transitions.forEach((t) {
+      if (!un.contains(t.toState) && !un.contains(t.fromState)) {
+        ndfa2.addTransition(t);
+      }
+    });
+    ndfa.states.forEach((s) {
+      if (!un.contains(s)) {
+        ndfa2.addState(s);
+      }
+    });
+    return ndfa2;
   }
 
   static int _thompsonConstruction(
