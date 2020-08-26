@@ -209,18 +209,6 @@ class TestCLI {
     do {
       choice = await _optionMenu("What to do?", [
         _CliOption('Language Selection [REGEX|DFA|NDFA|..]', selectAutomaton),
-        _CliOption('Nothing 2', nothing),
-        _CliOption('Nothing 3', nothing),
-        _CliOption('Nothing 4', nothing),
-        _CliOption('Nothing 5', nothing),
-        _CliOption('Nothing 6', nothing),
-        _CliOption('Nothing 7', nothing),
-        _CliOption('Nothing 8', nothing),
-        _CliOption('Nothing 9', nothing),
-        _CliOption('Nothing 10', nothing),
-        _CliOption('Nothing 11', nothing),
-        _CliOption('Nothing 12', nothing),
-        _CliOption('Nothing 13', nothing),
         _CliOption('Exit', null),
       ]);
       await choice.onSelect?.call();

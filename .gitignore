@@ -1,3 +1,6 @@
+# Ignore dart2native build output
+bin/main.exe
+
 # Ignore script output
 out/
 
