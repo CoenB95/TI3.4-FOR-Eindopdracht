@@ -197,8 +197,8 @@ abstract class FiniteAutomaton implements FormalLanguage {
     return true;
   }
 
-  bool isStateReachable(FiniteAutomatonState state) =>
-      transitions.any((t) => t.toState == state && t.fromState != state);
+  bool isStateReachable(FiniteAutomatonState state) => transitions.any(
+      (t) => state.isStartState || t.toState == state && t.fromState != state);
 
   String toGraph() {
     StringBuffer buffer = StringBuffer();
